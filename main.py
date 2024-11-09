@@ -5,7 +5,7 @@ import os
 import numpy as np
 from constants import CUR_DIR
 from yolo_funcs import download_yolo_files, load_yolo_model, get_human_bounding_boxes, draw_bounding_boxes
-
+from camera_utils import calculate_optimal_zoom_area
 
 def read_video(video_path, net, classes, output_layers):
     cap = cv2.VideoCapture(video_path)
@@ -20,8 +20,12 @@ def read_video(video_path, net, classes, output_layers):
             break
 
         # Get human bounding boxes
-        boxes, class_ids, confidences = get_human_bounding_boxes(frame, net, classes, output_layers)
+        boxes, class_ids, confidences = get_human_bounding_boxes(frame, net, output_layers)
         frame = draw_bounding_boxes(frame, boxes, class_ids, classes)
+
+        zoom_box = calculate_optimal_zoom_area(boxes)
+        if zoom_box:
+            frame = draw_bounding_boxes(frame, [zoom_box], [0], classes, color=(0, 255, 0))
         
 
         # Display the resulting frame

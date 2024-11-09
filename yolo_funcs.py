@@ -68,10 +68,11 @@ def get_human_bounding_boxes(frame, net, output_layers):
     return filtered_boxes, class_ids, confidences
 
 
-def draw_bounding_boxes(frame, boxes, class_ids, classes):
+def draw_bounding_boxes(frame, boxes, class_ids, classes, color=(0, 255, 0)):
+    boxes = list(boxes)
     for i in range(len(boxes)):
         x, y, w, h = boxes[i]
         label = str(classes[class_ids[i]])
-        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-        cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
+        cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
     return frame

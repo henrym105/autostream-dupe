@@ -2,7 +2,7 @@ import numpy as np
 from constants import CAMERA_ZOOM_PADDING
 
 
-def calculate_optimal_zoom_area(player_positions, padding=CAMERA_ZOOM_PADDING):
+def calculate_optimal_zoom_area(player_positions, padding=CAMERA_ZOOM_PADDING) -> list:
     """
     Calculate the optimal zoom area based on player positions.
 
@@ -31,6 +31,6 @@ def calculate_optimal_zoom_area(player_positions, padding=CAMERA_ZOOM_PADDING):
     x_max = x_max + padding
     y_max = y_max + padding
 
-    return (x_min, y_min, x_max, y_max)
+    return [x_min, y_min, x_max, y_max]
 
 
