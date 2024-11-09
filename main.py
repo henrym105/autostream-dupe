@@ -9,7 +9,7 @@ from constants import (
     ZOOM_SMOOTHING_FRAME_COUNT,
 )
 from yolo_funcs import (
-    download_yolo_files, 
+    # download_yolo_files, 
     load_yolo_model, 
     get_human_bounding_boxes, 
     draw_bounding_boxes,
@@ -22,9 +22,11 @@ from camera_utils import (
 )
 
 
-def read_video(video_path, net, classes, output_layers, n=ZOOM_SMOOTHING_FRAME_COUNT):
+def read_video(video_path, yolo_model, n=ZOOM_SMOOTHING_FRAME_COUNT):
     cap = cv2.VideoCapture(video_path)
 
+    source_fps = cap.get(cv2.CAP_PROP_FPS)
+    print(f"Source FPS: {source_fps}")
     ret, prev_frame = cap.read()
     frame_count = 0
     current_zoom_area = [0, 0, prev_frame.shape[1], prev_frame.shape[0]]
@@ -35,17 +37,21 @@ def read_video(video_path, net, classes, output_layers, n=ZOOM_SMOOTHING_FRAME_C
         ret, frame = cap.read()
         if not ret or (cv2.waitKey(25) & 0xFF == ord('q')):
             break
+        elif int(source_fps) >= 30 and frame_count % 2 == 1:
+            frame_count += 1
+            continue
 
         # ------------------------------------------------
         # Process the Frame
         # ------------------------------------------------
         # Get human bounding boxes
-        boxes, class_ids, confidences = get_human_bounding_boxes(frame, net, output_layers)
-        frame = draw_bounding_boxes(frame, boxes, class_ids, classes)
+        boxes, class_ids, confidences = get_human_bounding_boxes(frame, yolo_model)
+        frame = draw_bounding_boxes(frame, boxes, class_ids, classes=["person"])
 
         zoom_box = calculate_optimal_zoom_area(boxes, aspect_ratio_h_w)
-        frame = zoom_frame(frame, zoom_box)
-        frame = smooth_transition(prev_frame, frame)
+        frame = draw_bounding_boxes(frame, [zoom_box], class_ids=[0], classes=["zoom_box"], color=(0, 0, 255))
+        # frame = zoom_frame(frame, zoom_box)
+        # frame = smooth_transition(prev_frame, frame)
 
         # ------------------------------------------------
         # Display the resulting frame
@@ -64,7 +70,6 @@ def read_video(video_path, net, classes, output_layers, n=ZOOM_SMOOTHING_FRAME_C
 
 
 if __name__ == "__main__":
-    download_yolo_files()
     video_path = os.path.join(CUR_DIR, 'data/raw/trimmed_video_path_go pro 12 full court view.mp4')
-    net, classes, output_layers = load_yolo_model()
-    read_video(video_path, net, classes, output_layers)
+    yolo_model = load_yolo_model()
+    read_video(video_path, yolo_model)
