@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-import os
+from os import path
 import urllib.request
 from ultralytics import YOLO
 
@@ -14,13 +14,24 @@ from constants import (
 # Load YOLO model
 def load_yolo_model(version: int = YOLO_VERSION):
     if version == 8:
-        v8_path = os.path.join(CUR_DIR, "yolo", "yolov8n.pt")
-        if os.path.exists(v8_path):
-            model = YOLO(v8_path)
-        else:
-            model = YOLO("yolov8n.pt")
-            # save the model locally
-            model.save(v8_path)
+        yolo_model_name = "yolov8n.pt"
+    elif version == 11:
+        yolo_model_name = "yolo11n.pt"
+    else:
+        raise ValueError("Invalid YOLO version. Supported versions are 8 and 11.")
+
+    # create the path to the model
+    yolo_model_path = path.join(CUR_DIR, "yolo", yolo_model_name)
+
+    if path.join(yolo_model_path):
+        model = YOLO(yolo_model_path)
+    else:
+        model = YOLO("yolov8n.pt")
+
+    # save the model locally
+    model.save(yolo_model_path)
+
+
 
     return model
 

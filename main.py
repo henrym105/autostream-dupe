@@ -2,6 +2,7 @@
 
 import cv2
 import os
+import time
 import numpy as np
 from constants import (
     CUR_DIR, 
@@ -16,37 +17,47 @@ from yolo_funcs import (
 )
 from camera_utils import (
     calculate_optimal_zoom_area, 
-    zoom_frame, 
-    smooth_transition,
-    interpolate_zoom_area,
 )
 
 
 def read_video(video_path, yolo_model, n=ZOOM_SMOOTHING_FRAME_COUNT):
     cap = cv2.VideoCapture(video_path)
 
+    current_frame_num = 0
     source_fps = cap.get(cv2.CAP_PROP_FPS)
-    print(f"Source FPS: {source_fps}")
     ret, prev_frame = cap.read()
-    frame_count = 0
     current_zoom_area = [0, 0, prev_frame.shape[1], prev_frame.shape[0]]
     target_zoom_area = current_zoom_area.copy()
     aspect_ratio_h_w = prev_frame.shape[0] / prev_frame.shape[1]
 
+
     while cap.isOpened():
+        # read the next frame from the video file
         ret, frame = cap.read()
         if not ret or (cv2.waitKey(25) & 0xFF == ord('q')):
             break
-        elif int(source_fps) >= 30 and frame_count % 2 == 1:
-            frame_count += 1
-            continue
+
+        # Only run inference on the odd numbered frames bc inference is too slow
+        # if int(source_fps) >= 30 and current_frame_num % 2 == 1:
+        # if current_frame_num % 2 == 1:
+        #     cv2.imshow('Frame', frame)
+        #     current_frame_num += 1
+        #     continue
 
         # ------------------------------------------------
         # Process the Frame
         # ------------------------------------------------
-        # Get human bounding boxes
-        boxes, class_ids, confidences = get_human_bounding_boxes(frame, yolo_model)
+        # find the human bounding boxes on the 
+        if current_frame_num % 3 == 0:
+            # run inference on the frame
+            boxes, class_ids, confidences = get_human_bounding_boxes(frame, yolo_model)
+            # save the bounding boxes for the next frame
+            prev_boxes = boxes
+        else:
+            # this is an even frame, so use the bounding boxes from the previous frame
+            boxes = prev_boxes
         frame = draw_bounding_boxes(frame, boxes, class_ids, classes=["person"])
+
 
         zoom_box = calculate_optimal_zoom_area(boxes, aspect_ratio_h_w)
         frame = draw_bounding_boxes(frame, [zoom_box], class_ids=[0], classes=["zoom_box"], color=(0, 0, 255))
@@ -62,7 +73,7 @@ def read_video(video_path, yolo_model, n=ZOOM_SMOOTHING_FRAME_COUNT):
         # save this frame as reference for the next one
         # ------------------------------------------------
         prev_frame = frame
-        frame_count += 1
+        current_frame_num += 1
 
     cap.release()
     cv2.destroyAllWindows()

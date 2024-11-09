@@ -68,6 +68,7 @@ def zoom_frame(frame, zoom_area):
     return zoomed_frame
 
 
+
 def smooth_transition(prev_frame, curr_frame, alpha=0.5):
     """Smooths the transition between two frames.
     
@@ -81,20 +82,3 @@ def smooth_transition(prev_frame, curr_frame, alpha=0.5):
     """
     return cv2.addWeighted(prev_frame, 1 - alpha, curr_frame, alpha, 0)
 
-
-def interpolate_zoom_area(start_area, end_area, step, total_steps):
-    """Interpolate between two zoom areas.
-    
-    Args:
-        start_area (list): Starting zoom area [x_min, y_min, x_max, y_max].
-        end_area (list): Ending zoom area [x_min, y_min, x_max, y_max].
-        step (int): Current step in the interpolation.
-        total_steps (int): Total number of steps for interpolation.
-    
-    Returns:
-        list: Interpolated zoom area [x_min, y_min, x_max, y_max].
-    """
-    return [
-        int(start_area[i] + (end_area[i] - start_area[i]) * step / total_steps)
-        for i in range(4)
-    ]
