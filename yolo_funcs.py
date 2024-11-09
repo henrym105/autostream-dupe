@@ -2,22 +2,17 @@ import cv2
 import numpy as np
 import os
 import urllib.request
+from ultralytics import YOLO
 
-from constants import CUR_DIR
+from constants import CUR_DIR, YOLO_3_FILE_DOWNLOAD_PATHS, YOLO_VERSION
 
 
 # Download YOLO model files if they do not exist
-def download_yolo_files():
+def download_yolo_files(files = YOLO_3_FILE_DOWNLOAD_PATHS):
     yolo_dir = "/Users/Henry/Desktop/github/cv-soccer/yolo"
     if not os.path.exists(yolo_dir):
         os.makedirs(yolo_dir)
-    
-    files = {
-        "yolov3.weights": "https://pjreddie.com/media/files/yolov3.weights",
-        "yolov3.cfg": "https://raw.githubusercontent.com/pjreddie/darknet/master/cfg/yolov3.cfg",
-        "coco.names": "https://raw.githubusercontent.com/pjreddie/darknet/master/data/coco.names"
-    }
-    
+
     for file_name, url in files.items():
         file_path = os.path.join(yolo_dir, file_name)
         if not os.path.exists(file_path):
@@ -27,13 +22,27 @@ def download_yolo_files():
 
 
 # Load YOLO model
-def load_yolo_model():
-    net = cv2.dnn.readNet(os.path.join(CUR_DIR, "yolo/yolov3.weights"), os.path.join(CUR_DIR, "yolo/yolov3.cfg"))
-    with open(os.path.join(CUR_DIR, "yolo/coco.names"), "r") as f:
-        classes = [line.strip() for line in f.readlines()]
-    layer_names = net.getLayerNames()
-    output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
-    return net, classes, output_layers
+def load_yolo_model(version: int = YOLO_VERSION):
+    if version == 3:
+        net = cv2.dnn.readNet(os.path.join(CUR_DIR, "yolo/yolov3.weights"), os.path.join(CUR_DIR, "yolo/yolov3.cfg"))
+        net.setPreferableBackend(cv2.dnn.DNN_BACKEND_CUDA)
+        net.setPreferableTarget(cv2.dnn.DNN_TARGET_CUDA)
+        with open(os.path.join(CUR_DIR, "yolo/coco.names"), "r") as f:
+            classes = [line.strip() for line in f.readlines()]
+        layer_names = net.getLayerNames()
+        output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers()]
+        return net, classes, output_layers
+    
+    elif version == 8:
+        v8_path = os.path.join(CUR_DIR, "yolo", "yolov8n.pt")
+        if os.path.exists(v8_path):
+            model = YOLO(v8_path)
+        else:
+            model = YOLO("yolov8n.pt")
+            # save the model locally
+            model.save(v8_path)
+        return model, None, None
+
 
 
 # Run inference on video frames

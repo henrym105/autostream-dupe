@@ -164,4 +164,6 @@ cython_debug/
 
 
 
-yolo/
+yolo/*
+*.pt
+data/*
