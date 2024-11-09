@@ -7,12 +7,13 @@ from ultralytics import YOLO
 from constants import (
     CUR_DIR,
     YOLO_VERSION,
+    YOLO_HUMAN_CONFIDENCE_THRESHOLD,
 )
 
 
 
 # Load YOLO model
-def load_yolo_model(version: int = YOLO_VERSION):
+def load_yolo_model(version: int = YOLO_VERSION) -> YOLO:
     if version == 8:
         yolo_model_name = "yolov8n.pt"
     elif version == 11:
@@ -23,31 +24,33 @@ def load_yolo_model(version: int = YOLO_VERSION):
     # create the path to the model
     yolo_model_path = path.join(CUR_DIR, "yolo", yolo_model_name)
 
-    if path.join(yolo_model_path):
-        model = YOLO(yolo_model_path)
+    if path.exists(yolo_model_path):
+        # Load the local copy of model
+        model = YOLO(yolo_model_path, verbose = True)
     else:
-        model = YOLO("yolov8n.pt")
-
-    # save the model locally
-    model.save(yolo_model_path)
-
-
+        # Download it and save a local copy
+        model = YOLO(yolo_model_name, verbose = True)
+        model.save(yolo_model_path)
 
     return model
 
 
 # Run inference on video frames using YOLOv8
-def get_human_bounding_boxes(frame, model):
-    results = model(frame)
+def get_human_bounding_boxes(frame, model: YOLO):
+    detection_threshold = YOLO_HUMAN_CONFIDENCE_THRESHOLD
     boxes = []
     class_ids = []
     confidences = []
 
-    for result in results:
-        for detection in result.boxes:
+    # run inference on the frame
+    objects_detected = model(frame)
+
+    for item in objects_detected:
+        for detection in item.boxes:
             class_id = int(detection.cls)
             confidence = float(detection.conf)
-            if confidence > 0.5 and class_id == 0:  # Class ID 0 is for 'person' in COCO dataset
+
+            if confidence > detection_threshold and class_id == 0:  # Class ID 0 is for 'person' in COCO dataset
                 x_min, y_min, x_max, y_max = map(int, detection.xyxy[0])
                 boxes.append([x_min, y_min, x_max - x_min, y_max - y_min])
                 confidences.append(confidence)
@@ -56,11 +59,12 @@ def get_human_bounding_boxes(frame, model):
     return boxes, class_ids, confidences
 
 
-def draw_bounding_boxes(frame, boxes, class_ids, classes, color=(0, 255, 0)):
+def draw_bounding_boxes(frame, boxes, label, color=(0, 255, 0)):
     boxes = list(boxes)
-    for i in range(len(boxes)):
-        x, y, w, h = boxes[i]
-        label = str(classes[class_ids[i]])
-        cv2.rectangle(frame, (x, y), (x + w, y + h), color, 2)
-        cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+    if len(boxes) > 0:
+        for i in range(len(boxes)):
+            tl_x, tl_y, w, h = boxes[i]
+            cv2.rectangle(frame, (tl_x, tl_y), (tl_x + w, tl_y + h), color, 2)
+            cv2.putText(frame, label, (tl_x, tl_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+
     return frame

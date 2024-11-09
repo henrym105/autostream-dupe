@@ -42,6 +42,6 @@ if __name__ == "__main__":
     video_url = "https://www.youtube.com/watch?app=desktop&v=Yjni2VguRLU"
     desired_resolution = "480p"
     start_time = 15  # Start at 30 seconds
-    end_time = 25    # End at 60 seconds
+    end_time = 75    # End at 60 seconds
 
     download_youtube_video(video_url, desired_resolution, start_time, end_time)

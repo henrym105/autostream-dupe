@@ -167,3 +167,4 @@ cython_debug/
 yolo/*
 *.pt
 data/*
+data/raw/trimmed_video_path_go pro 12 full court view.mp4
