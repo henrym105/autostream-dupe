@@ -25,6 +25,7 @@ def download_yolo_files():
             urllib.request.urlretrieve(url, file_path)
             print(f"Downloaded {file_name}")
 
+
 # Load YOLO model
 def load_yolo_model():
     net = cv2.dnn.readNet(os.path.join(CUR_DIR, "yolo/yolov3.weights"), os.path.join(CUR_DIR, "yolo/yolov3.cfg"))
@@ -36,7 +37,7 @@ def load_yolo_model():
 
 
 # Run inference on video frames
-def detect_humans(frame, net, classes, output_layers):
+def get_human_bounding_boxes(frame, net, output_layers):
     height, width, channels = frame.shape
     blob = cv2.dnn.blobFromImage(frame, 0.00392, (416, 416), (0, 0, 0), True, crop=False)
     net.setInput(blob)
@@ -63,12 +64,14 @@ def detect_humans(frame, net, classes, output_layers):
                 class_ids.append(class_id)
 
     indexes = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
+    filtered_boxes = [boxes[i] for i in range(len(boxes)) if i in indexes]
+    return filtered_boxes, class_ids, confidences
+
+
+def draw_bounding_boxes(frame, boxes, class_ids, classes):
     for i in range(len(boxes)):
-        if i in indexes:
-            x, y, w, h = boxes[i]
-            label = str(classes[class_ids[i]])
-            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-
+        x, y, w, h = boxes[i]
+        label = str(classes[class_ids[i]])
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        cv2.putText(frame, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
     return frame
-
