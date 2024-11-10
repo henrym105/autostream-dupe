@@ -21,7 +21,7 @@ from src.camera_utils import (
 )
 
 
-def read_video(video_path, yolo_model, draw_player_boxes=True, n=ZOOM_SMOOTHING_FRAME_COUNT):
+def read_video(video_path, yolo_model, draw_player_boxes=True, crop_video=True, n=ZOOM_SMOOTHING_FRAME_COUNT):
     cap = cv2.VideoCapture(video_path)
     source_fps = cap.get(cv2.CAP_PROP_FPS)
 
@@ -69,7 +69,8 @@ def read_video(video_path, yolo_model, draw_player_boxes=True, n=ZOOM_SMOOTHING_
         if zoom_box and draw_player_boxes:
             frame = draw_bounding_boxes(frame, [zoom_box], label="zoom_box", color=(0, 0, 255))
         
-        frame = zoom_frame(frame, zoom_box)
+        if crop_video:
+            frame = zoom_frame(frame, zoom_box)
         # frame = smooth_transition(prev_frame, frame)
 
         # Display the resulting frame
@@ -87,8 +88,9 @@ def read_video(video_path, yolo_model, draw_player_boxes=True, n=ZOOM_SMOOTHING_
 
 if __name__ == "__main__":
     video_path = os.path.join(CUR_DIR, "data", "raw", "example_video.mp4")
-    draw_player_boxes = False
+    draw_player_boxes = True
+    crop_video = False
 
     yolo_model = load_yolo_model()
 
-    read_video(video_path, yolo_model, draw_player_boxes)
+    read_video(video_path, yolo_model, draw_player_boxes, crop_video)
