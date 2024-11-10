@@ -7,8 +7,7 @@ from src.constants import (
     ZOOM_SMOOTHING_ALPHA,
 )
 
-
-def convert_elements_to_int(input_list):
+def convert_elements_to_int(input_list: list | tuple | np.ndarray | int) -> list | tuple | np.ndarray | int:
     """Convert all elements in a list-like object to integers, maintaining the same shape and format.
 
     Args:

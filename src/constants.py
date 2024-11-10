@@ -3,7 +3,7 @@ import os
 # Runtime options
 DRAW_PLAYER_BOXES = False
 CROP_VIDEO = True
-
+SAVE_VIDEO_LOCAL = True
 
 # Define the current directory as a constant
 CUR_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

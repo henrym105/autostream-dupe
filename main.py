@@ -8,6 +8,7 @@ from src.constants import (
     CROP_VIDEO,
     CUR_DIR, 
     DRAW_PLAYER_BOXES,
+    SAVE_VIDEO_LOCAL,
     ZOOM_SMOOTHING_ALPHA,
     ZOOM_SMOOTHING_FRAME_COUNT,
 )
@@ -30,7 +31,8 @@ def read_video(
     yolo_model: YOLO, 
     draw_player_boxes: bool = True, 
     crop_video: bool = True, 
-    n: int = ZOOM_SMOOTHING_FRAME_COUNT
+    save_video_local: bool = SAVE_VIDEO_LOCAL,
+    n: int = ZOOM_SMOOTHING_FRAME_COUNT,
 ) -> None:
     """Read a video file and process each frame to detect players and zoom in on them.
 
@@ -53,6 +55,12 @@ def read_video(
     
     prev_boxes = []
     current_frame_num = 0
+
+    # Define the output video path
+    output_video_path = os.path.join(CUR_DIR, "data", "processed", os.path.basename(video_path))
+    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
+    out = cv2.VideoWriter(output_video_path, fourcc, source_fps, (frame_display_size_h_w[1], frame_display_size_h_w[0]))
 
     while cap.isOpened():
         # read the next frame from the video file
@@ -95,18 +103,24 @@ def read_video(
         # Display the resulting frame
         cv2.imshow('Frame', frame)
 
+        # Write the frame to the output video
+        if save_video_local:
+            out.write(frame)
+
         # save this frame as reference for the next one
         prev_frame = frame
         current_frame_num += 1
 
     cap.release()
+    out.release()
     cv2.destroyAllWindows()
 
 
 
 if __name__ == "__main__":
-    video_path = os.path.join(CUR_DIR, "data", "raw", "example_video.mp4")
+    src_path = os.path.join(CUR_DIR, "data", "raw", "example_video.mp4")
+    save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_autozoom.mp4")
 
     yolo_model = load_yolo_model()
 
-    read_video(video_path, yolo_model, DRAW_PLAYER_BOXES, CROP_VIDEO)
+    read_video(src_path, yolo_model, DRAW_PLAYER_BOXES, CROP_VIDEO, SAVE_VIDEO_LOCAL, save_path)
