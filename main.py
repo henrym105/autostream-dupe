@@ -4,7 +4,7 @@ import cv2
 import os
 import time
 import numpy as np
-from constants import (
+from src.constants import (
     CUR_DIR, 
     ZOOM_SMOOTHING_ALPHA,
     ZOOM_SMOOTHING_FRAME_COUNT,
@@ -89,7 +89,7 @@ def read_video(video_path, yolo_model, draw_player_boxes=True, crop_video=True, 
 if __name__ == "__main__":
     video_path = os.path.join(CUR_DIR, "data", "raw", "example_video.mp4")
     draw_player_boxes = True
-    crop_video = False
+    crop_video = True
 
     yolo_model = load_yolo_model()
 
