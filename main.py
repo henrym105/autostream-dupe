@@ -9,13 +9,13 @@ from constants import (
     ZOOM_SMOOTHING_ALPHA,
     ZOOM_SMOOTHING_FRAME_COUNT,
 )
-from yolo_funcs import (
+from src.yolo_funcs import (
     # download_yolo_files, 
     load_yolo_model, 
     get_all_yolo_bounding_boxes, 
     draw_bounding_boxes,
 )
-from camera_utils import (
+from src.camera_utils import (
     calculate_optimal_zoom_area, 
     zoom_frame,
 )
@@ -29,7 +29,7 @@ def read_video(video_path, yolo_model, draw_player_boxes=True, n=ZOOM_SMOOTHING_
     ret, prev_frame = cap.read()
 
     # initialize variables
-    current_zoom_box = [0,0, prev_frame.shape[1], prev_frame.shape[0]]
+    current_zoom_box = [0,0, prev_frame.shape[0], prev_frame.shape[1]]
     target_zoom_box = current_zoom_box.copy()
     frame_display_size_h_w = prev_frame.shape[:2]
     frame_ratio_h_w = frame_display_size_h_w[0] / frame_display_size_h_w[1]
@@ -47,13 +47,7 @@ def read_video(video_path, yolo_model, draw_player_boxes=True, n=ZOOM_SMOOTHING_
         ret, frame = cap.read()
         if not ret or (cv2.waitKey(25) & 0xFF == ord('q')):
             break
-
-        # Only run inference on the odd numbered frames bc inference is too slow
-        # if current_frame_num % 2 == 1:
-        #     cv2.imshow('Frame', frame)
-        #     current_frame_num += 1
-        #     continue
-
+        
         # ------------------------------------------------
         # Process the Frame
         # ------------------------------------------------
@@ -85,9 +79,6 @@ def read_video(video_path, yolo_model, draw_player_boxes=True, n=ZOOM_SMOOTHING_
         prev_frame = frame
         current_frame_num += 1
 
-        # Pause the program until Enter is pressed
-        # input("Press Enter to continue...")
-        # print()
     
     cap.release()
     cv2.destroyAllWindows()
