@@ -12,11 +12,12 @@ from constants import (
 from yolo_funcs import (
     # download_yolo_files, 
     load_yolo_model, 
-    get_human_bounding_boxes, 
+    get_all_yolo_bounding_boxes, 
     draw_bounding_boxes,
 )
 from camera_utils import (
     calculate_optimal_zoom_area, 
+    zoom_frame,
 )
 
 
@@ -48,7 +49,6 @@ def read_video(video_path, yolo_model, n=ZOOM_SMOOTHING_FRAME_COUNT):
             break
 
         # Only run inference on the odd numbered frames bc inference is too slow
-        # if int(source_fps) >= 30 and current_frame_num % 2 == 1:
         # if current_frame_num % 2 == 1:
         #     cv2.imshow('Frame', frame)
         #     current_frame_num += 1
@@ -60,29 +60,28 @@ def read_video(video_path, yolo_model, n=ZOOM_SMOOTHING_FRAME_COUNT):
         # find the human bounding boxes on the 
         if current_frame_num % 2 == 0:
             # run inference on the frame
-            boxes, class_ids, confidences = get_human_bounding_boxes(frame, yolo_model)
+            boxes = get_all_yolo_bounding_boxes(frame, yolo_model)
             # save the bounding boxes for the next frame
             prev_boxes = boxes
         else:
             # this is an even frame, so use the bounding boxes from the previous frame
             boxes = prev_boxes
+        
         if boxes:
-            frame = draw_bounding_boxes(frame, boxes, label="person")
+            frame = draw_bounding_boxes(frame, boxes, label="player")
 
-        zoom_box = calculate_optimal_zoom_area(frame, boxes, frame_display_size_h_w)
+        # zoom_box in format [tl_x, tl_y, w, h]
+        zoom_box: list = calculate_optimal_zoom_area(frame, boxes, frame_display_size_h_w)
         if zoom_box:
             frame = draw_bounding_boxes(frame, [zoom_box], label="zoom_box", color=(0, 0, 255))
-        # frame = zoom_frame(frame, zoom_box)
+        
+        frame = zoom_frame(frame, zoom_box)
         # frame = smooth_transition(prev_frame, frame)
 
-        # ------------------------------------------------
         # Display the resulting frame
-        # ------------------------------------------------
         cv2.imshow('Frame', frame)
 
-        # ------------------------------------------------
         # save this frame as reference for the next one
-        # ------------------------------------------------
         prev_frame = frame
         current_frame_num += 1
 
