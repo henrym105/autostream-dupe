@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
-from constants import CAMERA_ZOOM_PADDING, ZOOM_MIN_WIDTH_PCT
-import time
+
+from src.constants import CAMERA_ZOOM_PADDING, ZOOM_MIN_WIDTH_PCT
 
 
 def keep_zoom_box_inside_frame(tl_point: tuple, br_point: tuple, img_width: int, img_height: int) -> tuple:
@@ -101,11 +101,11 @@ def calculate_optimal_zoom_area(frame: np.ndarray, player_positions_xyxy: list, 
     zoom_height = np.rint(min_width_zoom_box / aspect_ratio)
 
     # top left corner
-    tl_x = max(0, np.rint(center_x - zoom_width // 2))
-    tl_y = max(0, np.rint(center_y - zoom_height // 2))
+    tl_x = int(max(0, center_x - zoom_width // 2))
+    tl_y = int(max(0, center_y - zoom_height // 2))
 
-    br_x = min(frame_width, np.rint(center_x + zoom_width // 2))
-    br_y = min(frame_height, np.rint(center_y + zoom_height // 2))
+    br_x = int(min(frame_width, center_x + zoom_width // 2))
+    br_y = int(min(frame_height, center_y + zoom_height // 2))
 
     tl_point, br_point = keep_zoom_box_inside_frame((tl_x, tl_y), (br_x, br_y), frame_width, frame_height)
 

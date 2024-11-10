@@ -1,24 +1,9 @@
-""" Functions to load a YOLO model, run inference on 
-video frames, and draw bounding boxes around detected objects.
-
-Functions:
-    load_yolo_model(version: int = YOLO_VERSION) -> YOLO:
-        Load the YOLO model for object detection.
-
-    get_all_yolo_bounding_boxes(frame, model: YOLO) -> tuple:
-        Get the bounding boxes of humans detected in the frame using YOLO model.
-
-    draw_bounding_boxes(frame, boxes, label, color=(0, 255, 0)):
-        Draw bounding boxes around detected objects on the frame.
-"""
-
-from os import path
-
 import cv2
-from ultralytics import YOLO
 import numpy as np
+from os import path
+from ultralytics import YOLO
 
-from constants import CUR_DIR, YOLO_HUMAN_CONFIDENCE_THRESHOLD, YOLO_VERSION
+from src.constants import CUR_DIR, YOLO_HUMAN_CONFIDENCE_THRESHOLD, YOLO_VERSION
 
 
 # Load YOLO model
@@ -38,6 +23,7 @@ def load_yolo_model(version: int = YOLO_VERSION) -> YOLO:
     else:
         raise ValueError("Invalid YOLO version. Supported versions are 8 and 11.")
 
+    
     # create the path to the model
     yolo_model_path = path.join(CUR_DIR, "yolo", yolo_model_name)
 
