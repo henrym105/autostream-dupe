@@ -21,7 +21,7 @@ from camera_utils import (
 )
 
 
-def read_video(video_path, yolo_model, n=ZOOM_SMOOTHING_FRAME_COUNT):
+def read_video(video_path, yolo_model, draw_player_boxes=True, n=ZOOM_SMOOTHING_FRAME_COUNT):
     cap = cv2.VideoCapture(video_path)
     source_fps = cap.get(cv2.CAP_PROP_FPS)
 
@@ -67,12 +67,12 @@ def read_video(video_path, yolo_model, n=ZOOM_SMOOTHING_FRAME_COUNT):
             # this is an even frame, so use the bounding boxes from the previous frame
             boxes = prev_boxes
         
-        if boxes:
+        if boxes and draw_player_boxes:
             frame = draw_bounding_boxes(frame, boxes, label="player")
 
         # zoom_box in format [tl_x, tl_y, w, h]
         zoom_box: list = calculate_optimal_zoom_area(frame, boxes, frame_display_size_h_w)
-        if zoom_box:
+        if zoom_box and draw_player_boxes:
             frame = draw_bounding_boxes(frame, [zoom_box], label="zoom_box", color=(0, 0, 255))
         
         frame = zoom_frame(frame, zoom_box)
@@ -95,6 +95,9 @@ def read_video(video_path, yolo_model, n=ZOOM_SMOOTHING_FRAME_COUNT):
 
 
 if __name__ == "__main__":
-    video_path = os.path.join(CUR_DIR, 'data/raw/trimmed_video_path_go pro 12 full court view.mp4')
+    video_path = os.path.join(CUR_DIR, "data", "raw", "example_video.mp4")
+    draw_player_boxes = False
+
     yolo_model = load_yolo_model()
-    read_video(video_path, yolo_model)
+
+    read_video(video_path, yolo_model, draw_player_boxes)
