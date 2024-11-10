@@ -1,10 +1,33 @@
 import cv2
 import numpy as np
 
-from src.constants import CAMERA_ZOOM_PADDING, ZOOM_MIN_WIDTH_PCT
+from src.constants import (
+    CAMERA_ZOOM_PADDING, 
+    ZOOM_MIN_WIDTH_PCT, 
+    ZOOM_SMOOTHING_ALPHA,
+)
 
 
-def keep_zoom_box_inside_frame(tl_point: tuple, br_point: tuple, img_width: int, img_height: int) -> tuple:
+def convert_elements_to_int(input_list):
+    """Convert all elements in a list-like object to integers, maintaining the same shape and format.
+
+    Args:
+        input_list (list-like): The input list-like object.
+
+    Returns:
+        list-like: The list-like object with all elements converted to integers.
+    """
+    if isinstance(input_list, list):
+        return [convert_elements_to_int(item) for item in input_list]
+    elif isinstance(input_list, tuple):
+        return tuple(convert_elements_to_int(item) for item in input_list)
+    elif isinstance(input_list, np.ndarray):
+        return input_list.astype(int)
+    else:
+        return int(input_list)
+
+
+def keep_zoom_box_inside_frame(tl_point: tuple, br_point: tuple, frame) -> tuple:
     """Adjust the zoom box to ensure it stays within the frame boundaries.
     
     Args:
@@ -16,8 +39,9 @@ def keep_zoom_box_inside_frame(tl_point: tuple, br_point: tuple, img_width: int,
     Returns:
         tuple: ((tl_x, tl_y), (br_x, br_y)) The adjusted top-left and bottom-right corners of the zoom box.
     """
+    img_height, img_width = frame.shape[:2]
+
     # Ensure the top and left edges are within the frame boundaries
-    # 
     if tl_point[0] < 0:
         tl_point[0] = 0
     
@@ -37,6 +61,9 @@ def keep_zoom_box_inside_frame(tl_point: tuple, br_point: tuple, img_width: int,
         tl_point[0] = 0
     if tl_point[1] < 0:
         tl_point[1] = 0
+
+    tl_point = convert_elements_to_int(tl_point)
+    br_point = convert_elements_to_int(br_point)
 
     return tl_point, br_point
 
@@ -78,8 +105,8 @@ def calculate_optimal_zoom_area(frame: np.ndarray, player_positions_xyxy: list, 
     min_height_zoom_box = (y_max - y_min) + (2*CAMERA_ZOOM_PADDING)
 
     # But also ensure the width and height used are not less than ZOOM_MIN_WIDTH_PCT of the frame dimensions
-    min_width_zoom_box = max(min_width_zoom_box, np.rint(frame_width * ZOOM_MIN_WIDTH_PCT) )
-    min_height_zoom_box = max(min_height_zoom_box, np.rint(frame_height * ZOOM_MIN_WIDTH_PCT) )
+    min_width_zoom_box = max(min_width_zoom_box, frame_width * ZOOM_MIN_WIDTH_PCT)
+    min_height_zoom_box = max(min_height_zoom_box, frame_height * ZOOM_MIN_WIDTH_PCT) 
 
     # Calculate the width and height of the smallest rectangle that is at least min_width and min_height and has the same w/h aspect_ratio
     if min_width_zoom_box / min_height_zoom_box > aspect_ratio:
@@ -103,11 +130,11 @@ def calculate_optimal_zoom_area(frame: np.ndarray, player_positions_xyxy: list, 
     # top left corner
     tl_x = int(max(0, center_x - zoom_width // 2))
     tl_y = int(max(0, center_y - zoom_height // 2))
-
     br_x = int(min(frame_width, center_x + zoom_width // 2))
     br_y = int(min(frame_height, center_y + zoom_height // 2))
 
-    tl_point, br_point = keep_zoom_box_inside_frame((tl_x, tl_y), (br_x, br_y), frame_width, frame_height)
+    # tl_point, br_point = keep_zoom_box_inside_frame((tl_x, tl_y), (br_x, br_y), frame_width, frame_height)
+    tl_point, br_point = keep_zoom_box_inside_frame((tl_x, tl_y), (br_x, br_y), frame)
 
     return [tl_point[0], tl_point[1], br_point[0], br_point[1]]
 
@@ -143,4 +170,37 @@ def smooth_transition(prev_frame: np.ndarray, curr_frame: np.ndarray, alpha: flo
     return cv2.addWeighted(prev_frame, 1 - alpha, curr_frame, alpha, 0)
 
 
+def linear_smooth_zoom_box_shift(
+    frame: np.ndarray,
+    prev_zoom_box_xyxy: np.ndarray, 
+    new_zoom_box_xyxy: np.ndarray, 
+    max_shift_pct: float = ZOOM_SMOOTHING_ALPHA
+) -> np.ndarray:
+    """Shift the zoom box linearly towards the new zoom box coordinates, but no more than the given max_speed (% of wdith/height)
 
+    Args:
+        frame (np.ndarray): The video frame.
+        prev_zoom_box_xyxy (np.ndarray): The previous zoom box coordinates (tl xy, br xy) in xyxy format.
+        new_zoom_box_xyxy (np.ndarray): The new zoom box coordinates in xyxy format.
+        max_shift_pct (float): The maximum shift distance as a percentage of the frame dimensions.
+
+    Returns:
+        np.ndarray: The updated zoom box coordinates in xyxy format.
+    """
+    # Calculate the difference between the previous and new zoom box coordinates
+    # Can isolate the first two coordinates (top left corner), shift amount is same for all corners.
+    resulting_shift_xy = np.array([])
+    for i in range(len(prev_zoom_box_xyxy)):
+        adj_i = i % 2
+        desired_shift = new_zoom_box_xyxy[adj_i] - prev_zoom_box_xyxy[adj_i]
+        max_shift = max_shift_pct * frame.shape[adj_i]
+        result_this_axis = np.clip(desired_shift, -max_shift, max_shift)
+        resulting_shift_xy = np.append(resulting_shift_xy, result_this_axis)
+
+    updated_zoom_box_xyxy = prev_zoom_box_xyxy + resulting_shift_xy
+
+    updated_coords = keep_zoom_box_inside_frame(updated_zoom_box_xyxy[:2], updated_zoom_box_xyxy[2:], frame)
+    updated_zoom_box_xyxy = np.array(updated_coords).flatten()
+    # updated_zoom_box_xyxy = convert_elements_to_int(updated_zoom_box_xyxy)
+
+    return updated_zoom_box_xyxy.astype(int).tolist()
