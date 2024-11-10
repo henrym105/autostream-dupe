@@ -57,28 +57,17 @@ def get_all_yolo_bounding_boxes(frame, model: YOLO, class_id=0) -> tuple:
     for item in objects_detected:
         for detection in item.boxes:
             if (detection.conf > detection_threshold) and (detection.cls == class_id):
-                # xywh = np.array(detection.xywh[class_id]).astype(int).tolist()
-                # boxes.append(xywh)
                 xyxy = np.array(detection.xyxy[class_id]).astype(int).tolist()
                 boxes.append(xyxy)
 
     return boxes
 
 
-def draw_bounding_boxes(frame, boxes, label, color=(0, 255, 0)):
-    # boxes = [boxes]
-    for i in range(len(boxes)):
-        # Unpack the bounding box coordinates
-        # tl_x, tl_y, w, h = boxes[i]
-        # tl_point = (tl_x, tl_y)
-        # br_point = (tl_x + w, tl_y + h)
-        tl_x, tl_y, br_x, br_y = boxes[i]
-        tl_point = (tl_x, tl_y)
-        br_point = (br_x, br_y)
-
-        # draw the bounding box on the frame
+def draw_bounding_boxes(frame: np.ndarray, boxes: list, label: str = "", color: tuple = (0, 255, 0)) -> np.ndarray:
+    """Draw bounding boxes on the frame."""
+    for box in boxes:
+        tl_point, br_point = box[:2], box[2:]
         cv2.rectangle(frame, tl_point, br_point, color, 2)
-        # add the label to this bounding box
-        cv2.putText(frame, label, (tl_x, tl_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
+        if label:
+            cv2.putText(frame, label, (tl_point[0], tl_point[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
     return frame
