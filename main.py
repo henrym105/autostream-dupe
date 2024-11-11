@@ -11,6 +11,7 @@ from src.constants import (
     SAVE_VIDEO_LOCAL,
     ZOOM_SMOOTHING_ALPHA,
     ZOOM_SMOOTHING_FRAME_COUNT,
+    TEMP_CORNERS_COORDS_PATH,
 )
 from src.yolo_funcs import (
     load_yolo_model, 
@@ -24,6 +25,7 @@ from src.camera_utils import (
     zoom_frame,
 )
 from ultralytics import YOLO
+from select_court_corners import select_court_corners
 
 
 def read_video(
@@ -43,6 +45,8 @@ def read_video(
         crop_video (bool, optional): Whether to crop the video to the zoom box. Defaults to True.
         n (int, optional): The number of frames to smooth the zoom box over. Defaults to ZOOM_SMOOTHING_FRAME_COUNT.
     """
+    select_court_corners(video_path)
+
     # open the video file
     cap = cv2.VideoCapture(video_path)
     source_fps = cap.get(cv2.CAP_PROP_FPS)
