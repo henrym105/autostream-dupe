@@ -43,56 +43,51 @@ def read_video(
         crop_video (bool, optional): Whether to crop the video to the zoom box. Defaults to True.
         n (int, optional): The number of frames to smooth the zoom box over. Defaults to ZOOM_SMOOTHING_FRAME_COUNT.
     """
-    # open the video file
+    # Open the video file
     cap = cv2.VideoCapture(video_path)
     source_fps = cap.get(cv2.CAP_PROP_FPS)
 
-    # read the first frame
+    # Read the first frame
     ret, prev_frame = cap.read()
-
-    # initialize variables
     frame_display_size_h_w = prev_frame.shape[:2]
-    
+        
     prev_boxes = []
     current_frame_num = 0
+    prev_zoom_box = None
 
     # Define the output video path
     output_video_path = os.path.join(CUR_DIR, "data", "processed", os.path.basename(video_path))
-    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
     out = cv2.VideoWriter(output_video_path, fourcc, source_fps, (frame_display_size_h_w[1], frame_display_size_h_w[0]))
 
     while cap.isOpened():
-        # read the next frame from the video file
+        # Read the next frame from the video file
         ret, frame = cap.read()
         if not ret or (cv2.waitKey(25) & 0xFF == ord('q')):
             break
-        
+
         # ------------------------------------------------
         # Process the Frame
         # ------------------------------------------------
-        # find the human bounding boxes on the 
         if current_frame_num % 2 == 0:
-            # run inference on the frame
+            # Run inference on the frame
             boxes = get_all_yolo_bounding_boxes(frame, yolo_model)
-            # save the bounding boxes for the next frame
             prev_boxes = boxes
         else:
-            # this is an even frame, so use the bounding boxes from the previous frame
+            # Use the bounding boxes from the previous frame
             boxes = prev_boxes
-        
+
         if boxes and draw_player_boxes:
             frame = draw_bounding_boxes(frame, boxes, label="player")
 
-        # zoom_box in format [tl_x, tl_y, w, h]
-        zoom_box: list = calculate_optimal_zoom_area(frame, boxes, frame_display_size_h_w)        
-        
-        # skip the smoothing algo on the first frame
-        if current_frame_num != 0: 
-            zoom_box = linear_smooth_zoom_box_shift(frame, prev_zoom_box, zoom_box)
-        prev_zoom_box = zoom_box.copy()
+        # Calculate zoom_box
+        zoom_box = calculate_optimal_zoom_area(frame, boxes, frame_display_size_h_w)        
 
-        # frame = smooth_transition(prev_frame, frame, alpha=ZOOM_SMOOTHING_ALPHA)
+        # Apply smoothing if not the first frame
+        if prev_zoom_box is not None:
+            # zoom_box = linear_smooth_zoom_box_shift(prev_zoom_box, zoom_box, alpha=0.3)  # Adjust alpha as needed
+            zoom_box = linear_smooth_zoom_box_shift(frame, prev_zoom_box, zoom_box, ZOOM_SMOOTHING_ALPHA)
+        prev_zoom_box = zoom_box.copy()
 
         if zoom_box and draw_player_boxes:
             frame = draw_bounding_boxes(frame, [zoom_box], label="zoom_box", color=(0, 0, 255))
@@ -107,7 +102,7 @@ def read_video(
         if save_video_local:
             out.write(frame)
 
-        # save this frame as reference for the next one
+        # Save this frame as reference for the next one
         prev_frame = frame
         current_frame_num += 1
 

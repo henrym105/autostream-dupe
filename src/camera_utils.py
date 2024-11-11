@@ -36,7 +36,8 @@ def keep_zoom_box_inside_frame(tl_point: tuple, br_point: tuple, frame) -> tuple
         img_height (int): The height of the frame.
         
     Returns:
-        tuple: ((tl_x, tl_y), (br_x, br_y)) The adjusted top-left and bottom-right corners of the zoom box.
+        tuple: ((tl_x, tl_y), (br_x, br_y)) The adjusted top-left and bottom-right 
+        corners of the zoom box.
     """
     img_height, img_width = frame.shape[:2]
 
