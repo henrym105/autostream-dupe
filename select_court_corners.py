@@ -1,7 +1,6 @@
 import cv2
 import os
 import json
-import time
 import numpy as np
 from src.constants import TEMP_CORNERS_COORDS_PATH
 
@@ -19,8 +18,12 @@ def click_event(event, x, y, flags, param):
         
         if len(coordinates) == 4:
             cv2.line(param, coordinates[3], coordinates[0], (0, 255, 0), 2)
+            overlay = param.copy()
+            cv2.fillPoly(overlay, [np.array(coordinates)], (0, 255, 0))
+            cv2.addWeighted(overlay, 0.1, param, 0.9, 0, param)  # Blend the overlay with 90% transparency
+
             cv2.imshow("Select Court Corners", param)
-            cv2.waitKey(2000)  # Wait for 2 seconds before exiting
+            cv2.waitKey(3000)  # Wait for 2 seconds before exiting
             cv2.destroyAllWindows()
 
         cv2.imshow("Select Court Corners", param)
@@ -46,7 +49,6 @@ def rearrange_corner_coords(coordinates) -> list:
     bottom_right = max(bottom_two, key=lambda x: x[0])
 
     return [top_left, top_right, bottom_right, bottom_left]
-
 
 
 def select_court_corners(video_path):
@@ -79,6 +81,7 @@ def select_court_corners(video_path):
     with open(TEMP_CORNERS_COORDS_PATH, 'w') as f:
         json.dump(corners, f)
     print(f"Coordinates saved to {TEMP_CORNERS_COORDS_PATH}")
+
 
 
 if __name__ == "__main__":

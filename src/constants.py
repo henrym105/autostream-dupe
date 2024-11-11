@@ -1,8 +1,9 @@
 import os
 
 # Runtime options
-DRAW_PLAYER_BOXES = False
-CROP_VIDEO = True
+DRAW_PLAYER_BOXES = True
+DRAW_COURT_BOX = True
+CROP_VIDEO = False
 SAVE_VIDEO_LOCAL = True
 
 # Define the current directory as a constant

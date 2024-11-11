@@ -8,6 +8,7 @@ from src.constants import (
     CROP_VIDEO,
     CUR_DIR, 
     DRAW_PLAYER_BOXES,
+    DRAW_COURT_BOX,
     SAVE_VIDEO_LOCAL,
     ZOOM_SMOOTHING_ALPHA,
     ZOOM_SMOOTHING_FRAME_COUNT,
@@ -15,6 +16,7 @@ from src.constants import (
 )
 from src.yolo_funcs import (
     load_yolo_model, 
+    draw_court_outline,
     get_all_yolo_bounding_boxes, 
     draw_bounding_boxes,
 )
@@ -87,6 +89,10 @@ def read_video(
         
         if boxes and draw_player_boxes:
             frame = draw_bounding_boxes(frame, boxes, label="player")
+        
+        if DRAW_COURT_BOX:
+            frame = draw_court_outline(frame)
+
 
         # zoom_box in format [tl_x, tl_y, w, h]
         zoom_box: list = calculate_optimal_zoom_area(frame, boxes, frame_display_size_h_w)        
@@ -122,8 +128,9 @@ def read_video(
 
 
 if __name__ == "__main__":
-    src_path = os.path.join(CUR_DIR, "data", "raw", "example_video.mp4")
-    save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_autozoom.mp4")
+    # src_path = os.path.join(CUR_DIR, "data", "raw", "example_video.mp4")
+    src_path = os.path.join(CUR_DIR, "data", "raw", "example_video_2.mp4")
+    save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_2_autozoom.mp4")
 
     yolo_model = load_yolo_model()
 
