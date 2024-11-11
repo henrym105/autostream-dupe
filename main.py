@@ -68,6 +68,7 @@ def read_video(
     fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
     out = cv2.VideoWriter(output_video_path, fourcc, source_fps, (frame_display_size_h_w[1], frame_display_size_h_w[0]))
 
+    prev_zoom_box = None
     while cap.isOpened():
         # read the next frame from the video file
         ret, frame = cap.read()
@@ -98,9 +99,11 @@ def read_video(
         zoom_box: list = calculate_optimal_zoom_area(frame, boxes, frame_display_size_h_w)        
         
         # skip the smoothing algo on the first frame
-        if current_frame_num != 0: 
+        if prev_zoom_box is not None: 
             zoom_box = linear_smooth_zoom_box_shift(frame, prev_zoom_box, zoom_box)
         prev_zoom_box = zoom_box.copy()
+
+        print(f"Current zoom box: {zoom_box}")
 
         # frame = smooth_transition(prev_frame, frame, alpha=ZOOM_SMOOTHING_ALPHA)
 
