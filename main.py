@@ -91,8 +91,7 @@ def read_video(
             # this is an even frame, so use the bounding boxes from the previous frame
             boxes = prev_boxes
         
-        print(boxes)
-        
+
         if boxes and draw_player_boxes:
             frame = draw_bounding_boxes(frame, boxes, label="player")
         
@@ -104,11 +103,11 @@ def read_video(
         zoom_box: list = calculate_optimal_zoom_area(frame, boxes, frame_display_size_h_w)        
         
         # skip the smoothing algo on the first frame
-        if prev_zoom_box is not None: 
-            zoom_box = linear_smooth_zoom_box_shift(frame, prev_zoom_box, zoom_box)
+        # if prev_zoom_box is not None: 
+        #     zoom_box = linear_smooth_zoom_box_shift(frame, prev_zoom_box, zoom_box)
         prev_zoom_box = zoom_box.copy()
 
-        print(f"Current zoom box: {zoom_box}")
+        # print(f"Current zoom box: {zoom_box}")
 
         # frame = smooth_transition(prev_frame, frame, alpha=ZOOM_SMOOTHING_ALPHA)
 

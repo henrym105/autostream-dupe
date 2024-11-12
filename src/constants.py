@@ -3,7 +3,7 @@ import os
 # Runtime options
 DRAW_PLAYER_BOXES = True
 DRAW_COURT_BOX = True
-CROP_VIDEO = False
+CROP_VIDEO = True
 SAVE_VIDEO_LOCAL = True
 
 # Define the current directory as a constant
@@ -14,6 +14,7 @@ TEMP_CORNERS_COORDS_PATH = os.path.join(CUR_DIR, "data", "temp", "court_corners_
 
 # Padding for camera zoom
 CAMERA_ZOOM_PADDING = 10
+CAMERA_ZOOM_PADDING_PCT = 0.10
 
 # Smoothing parameters for zoom transition
 ZOOM_SMOOTHING_ALPHA = 0.01

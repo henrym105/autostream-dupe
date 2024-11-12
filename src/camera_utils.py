@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from src.constants import (
-    CAMERA_ZOOM_PADDING, 
+    CAMERA_ZOOM_PADDING_PCT, 
     ZOOM_MIN_WIDTH_PCT, 
     ZOOM_SMOOTHING_ALPHA,
 )
@@ -80,6 +80,12 @@ def calculate_optimal_zoom_area(frame: np.ndarray, player_positions_xyxy: list, 
     Returns:
         list: Coordinates of the zoom area (x_min, y_min, x_max, y_max).
     """
+    frame_width = frame.shape[1]
+    frame_height = frame.shape[0]
+
+    x_padding = frame_width * CAMERA_ZOOM_PADDING_PCT
+    y_padding = frame_height * CAMERA_ZOOM_PADDING_PCT
+    
     # Convert the player positions to xywh format
     player_positions_xyxy = np.array(player_positions_xyxy)
 
@@ -100,8 +106,8 @@ def calculate_optimal_zoom_area(frame: np.ndarray, player_positions_xyxy: list, 
     # ---------------------------------------------------------
     # This is the minimum width and height needed for a bounding 
     # box to fully encompass all players bboxes 
-    min_width_zoom_box = (x_max - x_min) + (2*CAMERA_ZOOM_PADDING)
-    min_height_zoom_box = (y_max - y_min) + (2*CAMERA_ZOOM_PADDING)
+    min_width_zoom_box = (x_max - x_min) + (2 * x_padding)
+    min_height_zoom_box = (y_max - y_min) + (2 * y_padding)
 
     # But also ensure the width and height used are not less than ZOOM_MIN_WIDTH_PCT of the frame dimensions
     min_width_zoom_box = max(min_width_zoom_box, frame_width * ZOOM_MIN_WIDTH_PCT)
@@ -184,7 +190,6 @@ def linear_smooth_zoom_box_shift(
     """
     # Calculate the difference between the previous and new zoom box coordinates
     resulting_shift_xy = np.array([])
-    # for i in range(len(prev_zoom_box_xyxy)):
     for i in range(len(prev_zoom_box_xyxy)):
         coord_xy = i % 2
         desired_shift = new_zoom_box_xyxy[i] - prev_zoom_box_xyxy[i]

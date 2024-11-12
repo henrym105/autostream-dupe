@@ -68,7 +68,6 @@ def select_court_corners(frame):
         
     print(f"Coordinates saved to {TEMP_CORNERS_COORDS_PATH}")
     return None
-    # return coordinates
 
 
 if __name__ == "__main__":
