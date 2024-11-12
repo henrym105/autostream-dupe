@@ -3,8 +3,15 @@ import numpy as np
 from os import path
 from ultralytics import YOLO
 
-from src.constants import CUR_DIR, YOLO_HUMAN_CONFIDENCE_THRESHOLD, YOLO_VERSION
+from src.constants import (
+    CUR_DIR, 
+    DRAW_COURT_BOX, 
+    YOLO_HUMAN_CONFIDENCE_THRESHOLD, 
+    YOLO_VERSION, 
+    TEMP_CORNERS_COORDS_PATH
+)
 
+import json
 
 # Load YOLO model
 def load_yolo_model(version: int = YOLO_VERSION) -> YOLO:
@@ -38,7 +45,7 @@ def load_yolo_model(version: int = YOLO_VERSION) -> YOLO:
     return model
 
 # Run inference on video frames using YOLO
-def get_all_yolo_bounding_boxes(frame, model: YOLO, class_id=0) -> tuple:
+def get_all_yolo_bounding_boxes(frame, model: YOLO, class_id=0, court_coords: np.ndarray = None) -> tuple:
     """Get the bounding boxes of humans detected in the frame using YOLO model.
 
     Args:
@@ -51,6 +58,12 @@ def get_all_yolo_bounding_boxes(frame, model: YOLO, class_id=0) -> tuple:
     detection_threshold = YOLO_HUMAN_CONFIDENCE_THRESHOLD
     boxes = []
 
+    # Load court coordinates
+    if court_coords is None:
+        with open(TEMP_CORNERS_COORDS_PATH, 'r') as f:
+            court_coords = json.load(f)
+    court_polygon = np.array(court_coords, dtype=np.int32)
+
     # Run inference on the frame
     objects_detected = model(frame)
 
@@ -58,7 +71,9 @@ def get_all_yolo_bounding_boxes(frame, model: YOLO, class_id=0) -> tuple:
         for detection in item.boxes:
             if (detection.conf > detection_threshold) and (detection.cls == class_id):
                 xyxy = np.array(detection.xyxy[class_id]).astype(int).tolist()
-                boxes.append(xyxy)
+                # Filter boxes based on court coordinates
+                if cv2.pointPolygonTest(court_polygon, (xyxy[2], xyxy[3]), False) >= 0:
+                    boxes.append(xyxy)
 
     return boxes
 
@@ -67,7 +82,17 @@ def draw_bounding_boxes(frame: np.ndarray, boxes: list, label: str = "", color: 
     """Draw bounding boxes on the frame."""
     for box in boxes:
         tl_point, br_point = box[:2], box[2:]
-        cv2.rectangle(frame, tl_point, br_point, color, 2)
+        cv2.rectangle(frame, tl_point, br_point, color, 1)
         if label:
             cv2.putText(frame, label, (tl_point[0], tl_point[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
+    return frame
+
+
+def draw_court_outline(frame, court_coords: list = None) -> np.ndarray:
+    """Draw the outline of the court on the frame."""
+    if not court_coords:
+        with open(TEMP_CORNERS_COORDS_PATH, 'r') as f:
+            court_coords = json.load(f)
+    court_polygon = np.array(court_coords, dtype=np.int32)
+    cv2.polylines(frame, [court_polygon], isClosed=True, color=(0, 255, 0), thickness=2)
     return frame

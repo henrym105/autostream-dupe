@@ -2,9 +2,10 @@ import cv2
 import numpy as np
 
 from src.constants import (
-    CAMERA_ZOOM_PADDING, 
+    CAMERA_ZOOM_PADDING_PCT, 
+    FRAME_MAX_SHIFT_PCT,
+    FRAME_MAX_ZOOM_CHANGE_PCT,
     ZOOM_MIN_WIDTH_PCT, 
-    ZOOM_SMOOTHING_ALPHA,
 )
 
 def convert_elements_to_int(input_list: list | tuple | np.ndarray | int) -> list | tuple | np.ndarray | int:
@@ -67,7 +68,7 @@ def keep_zoom_box_inside_frame(tl_point: tuple, br_point: tuple, frame) -> tuple
     return tl_point, br_point
 
 
-def calculate_optimal_zoom_area(frame: np.ndarray, player_positions_xyxy: list, frame_display_size_h_w: tuple) -> list:
+def calculate_optimal_zoom_area(frame: np.ndarray, player_positions_xyxy: list) -> list:
     """Calculate the optimal zoom area based on player positions. 
     The resulting box will have the same aspect ratio as the `frame`, centered on the middle of player_positions,
     and will be large enough to include all player positions with at least `padding` pixels inside the outer dimensions of the current frame.
@@ -80,34 +81,30 @@ def calculate_optimal_zoom_area(frame: np.ndarray, player_positions_xyxy: list, 
     Returns:
         list: Coordinates of the zoom area (x_min, y_min, x_max, y_max).
     """
-    # Convert the player positions to xywh format
-    player_positions_xyxy = np.array(player_positions_xyxy)
-
-    # If there are no player positions, return the full frame
-    if len(player_positions_xyxy) == 0:
-        return [0, 0, frame_display_size_h_w[1], frame_display_size_h_w[0]]
-
-    # Calculate the aspect ratio of the frame
-    frame_height, frame_width = frame_display_size_h_w
+    # Get the frame dimensions and aspect ratio
+    frame_height, frame_width = frame.shape[:2]
     aspect_ratio = frame_width / frame_height
 
-    # Separate the x and y coordinates
+    # If no player positions are provided, return the full frame dimensions
+    if not player_positions_xyxy:
+        return [0, 0, frame_width, frame_height]
+
+    # Convert player positions to a numpy array for easier manipulation
+    player_positions_xyxy = np.array(player_positions_xyxy)
     x_coords = player_positions_xyxy[:, [0, 2]].flatten()
     y_coords = player_positions_xyxy[:, [1, 3]].flatten()
-    x_min, x_max = min(x_coords), max(x_coords)
-    y_min, y_max = min(y_coords), max(y_coords)
+    x_min, x_max = x_coords.min(), x_coords.max()
+    y_min, y_max = y_coords.min(), y_coords.max()
 
-    # ---------------------------------------------------------
-    # This is the minimum width and height needed for a bounding 
-    # box to fully encompass all players bboxes 
-    min_width_zoom_box = (x_max - x_min) + (2*CAMERA_ZOOM_PADDING)
-    min_height_zoom_box = (y_max - y_min) + (2*CAMERA_ZOOM_PADDING)
+    # Calculate padding based on the frame dimensions and predefined percentage
+    x_padding = frame_width * CAMERA_ZOOM_PADDING_PCT
+    y_padding = frame_height * CAMERA_ZOOM_PADDING_PCT
 
-    # But also ensure the width and height used are not less than ZOOM_MIN_WIDTH_PCT of the frame dimensions
-    min_width_zoom_box = max(min_width_zoom_box, frame_width * ZOOM_MIN_WIDTH_PCT)
-    min_height_zoom_box = max(min_height_zoom_box, frame_height * ZOOM_MIN_WIDTH_PCT) 
+    # Calculate the minimum width and height of the zoom box, ensuring it is not smaller than a predefined percentage of the frame dimensions
+    min_width_zoom_box = max((x_max - x_min) + 2 * x_padding, frame_width * ZOOM_MIN_WIDTH_PCT)
+    min_height_zoom_box = max((y_max - y_min) + 2 * y_padding, frame_height * ZOOM_MIN_WIDTH_PCT)
 
-    # Calculate the width and height of the smallest rectangle that is at least min_width and min_height and has the same w/h aspect_ratio
+    # Adjust the zoom box dimensions to maintain the aspect ratio of the frame
     if min_width_zoom_box / min_height_zoom_box > aspect_ratio:
         zoom_width = min_width_zoom_box
         zoom_height = int(zoom_width / aspect_ratio)
@@ -115,26 +112,20 @@ def calculate_optimal_zoom_area(frame: np.ndarray, player_positions_xyxy: list, 
         zoom_height = min_height_zoom_box
         zoom_width = int(zoom_height * aspect_ratio)
 
-    # ---------------------------------------------------------
-    # Move the zoom-box to be centered around the players
-
-    # find middle point between all of the person bboxes
+    # Calculate the center of the zoom box based on the player positions
     center_x = (x_min + x_max) // 2
     center_y = (y_min + y_max) // 2
 
-    # Calculate the height of the zoom box to keep the aspect ratio with this width value
-    zoom_width = min_width_zoom_box
-    zoom_height = np.rint(min_width_zoom_box / aspect_ratio)
+    # Calculate the top-left and bottom-right corners of the zoom box
+    tl_x = max(0, center_x - zoom_width // 2)
+    tl_y = max(0, center_y - zoom_height // 2)
+    br_x = min(frame_width, center_x + zoom_width // 2)
+    br_y = min(frame_height, center_y + zoom_height // 2)
 
-    # top left corner
-    tl_x = int(max(0, center_x - zoom_width // 2))
-    tl_y = int(max(0, center_y - zoom_height // 2))
-    br_x = int(min(frame_width, center_x + zoom_width // 2))
-    br_y = int(min(frame_height, center_y + zoom_height // 2))
-
-    # tl_point, br_point = keep_zoom_box_inside_frame((tl_x, tl_y), (br_x, br_y), frame_width, frame_height)
+    # Ensure the zoom box stays within the frame boundaries
     tl_point, br_point = keep_zoom_box_inside_frame((tl_x, tl_y), (br_x, br_y), frame)
 
+    # Return the coordinates of the zoom area
     return [tl_point[0], tl_point[1], br_point[0], br_point[1]]
 
 
@@ -142,40 +133,29 @@ def zoom_frame(frame: np.ndarray, zoom_area: list) -> np.ndarray:
     """Zooms into the specified area of the frame.
     
     Args:
-        frame (np.ndarray): The original video frame.
-        zoom_area (list): A list [x, y, w, h] specifying the area to zoom into.
+        frame (np.ndarray): The video frame.
+        zoom_area (list): The zoom area coordinates (tlx, tly, brx, bry).
     
     Returns:
         np.ndarray: The zoomed frame.
     """
     tlx, tly, brx, bry = zoom_area
+    # Crop the frame to the specified zoom area and resize it to the original frame size
     zoomed_frame = frame[tly:bry, tlx:brx]
+    # Upscale the zoomed frame to keep the original frame's pixel size
     zoomed_frame = cv2.resize(zoomed_frame, (frame.shape[1], frame.shape[0]))
     return zoomed_frame
 
-
-
-def smooth_transition(prev_frame: np.ndarray, curr_frame: np.ndarray, alpha: float = 0.5) -> np.ndarray:
-    """Smooths the transition between two frames.
-    
-    Args:
-        prev_frame (np.ndarray): The previous video frame.
-        curr_frame (np.ndarray): The current video frame.
-        alpha (float): The blending factor (0.0 to 1.0).
-    
-    Returns:
-        np.ndarray: The blended frame.
-    """
-    return cv2.addWeighted(prev_frame, 1 - alpha, curr_frame, alpha, 0)
 
 
 def linear_smooth_zoom_box_shift(
     frame: np.ndarray,
     prev_zoom_box_xyxy: np.ndarray, 
     new_zoom_box_xyxy: np.ndarray, 
-    max_shift_pct: float = ZOOM_SMOOTHING_ALPHA
+    max_shift_pct: float = FRAME_MAX_SHIFT_PCT,
+    max_zoom_change_pct: float = FRAME_MAX_ZOOM_CHANGE_PCT
 ) -> np.ndarray:
-    """Shift the zoom box linearly towards the new zoom box coordinates, but no more than the given max_speed (% of wdith/height)
+    """Shift the zoom box linearly towards the new zoom box coordinates, but no more than the given max_speed (% of width/height)
 
     Args:
         frame (np.ndarray): The video frame.
@@ -186,20 +166,104 @@ def linear_smooth_zoom_box_shift(
     Returns:
         np.ndarray: The updated zoom box coordinates in xyxy format.
     """
-    # Calculate the difference between the previous and new zoom box coordinates
-    # Can isolate the first two coordinates (top left corner), shift amount is same for all corners.
-    resulting_shift_xy = np.array([])
-    for i in range(len(prev_zoom_box_xyxy)):
-        adj_i = i % 2
-        desired_shift = new_zoom_box_xyxy[adj_i] - prev_zoom_box_xyxy[adj_i]
-        max_shift = max_shift_pct * frame.shape[adj_i]
-        result_this_axis = np.clip(desired_shift, -max_shift, max_shift)
-        resulting_shift_xy = np.append(resulting_shift_xy, result_this_axis)
+    if not prev_zoom_box_xyxy:
+        return [0, 0, frame.shape[1], frame.shape[0]]
 
-    updated_zoom_box_xyxy = prev_zoom_box_xyxy + resulting_shift_xy
+    # Convert previous and new zoom box coordinates from xyxy to centerxywh format
+    prev_centerxywh = convert_xyxy_to_centerxy(prev_zoom_box_xyxy)
+    new_centerxywh = convert_xyxy_to_centerxy(new_zoom_box_xyxy)
 
-    updated_coords = keep_zoom_box_inside_frame(updated_zoom_box_xyxy[:2], updated_zoom_box_xyxy[2:], frame)
-    updated_zoom_box_xyxy = np.array(updated_coords).flatten()
-    # updated_zoom_box_xyxy = convert_elements_to_int(updated_zoom_box_xyxy)
+    # Calculate the actual shift in x and y directions, capped by the maximum allowed shift
+    max_shift_x = max_shift_pct * frame.shape[1]
+    max_shift_y = max_shift_pct * frame.shape[0]
+    capped_shift_x = np.clip(new_centerxywh[0] - prev_centerxywh[0], -max_shift_x, max_shift_x)
+    capped_shift_y = np.clip(new_centerxywh[1] - prev_centerxywh[1], -max_shift_y, max_shift_y)
+    
+    # Calculate the maximum allowed zoom change (given by height and width of zoom box) in x and
+    # y directions based on the previous zoom box dimensions
+    max_width_change_px = max_zoom_change_pct * prev_centerxywh[2]
+    max_height_change_px = max_zoom_change_pct * prev_centerxywh[3]
+    change_amt_w = np.clip(new_centerxywh[2] - prev_centerxywh[2], -max_width_change_px, max_width_change_px)
+    change_amt_h = np.clip(new_centerxywh[3] - prev_centerxywh[3], -max_height_change_px, max_height_change_px)
 
-    return updated_zoom_box_xyxy.astype(int).tolist()
+    # Update the center coordinates of the zoom box by adding the capped shift
+    updated_centerxywh = [
+        prev_centerxywh[0] + capped_shift_x,
+        prev_centerxywh[1] + capped_shift_y,
+        prev_centerxywh[2] + change_amt_w,
+        prev_centerxywh[3] + change_amt_h,
+    ]
+
+    # Convert the updated centerxywh coordinates back to xyxy format
+    updated_zoom_box_xyxy = convert_centrxywh_to_xyxy(updated_centerxywh)
+
+    # Adjust the zoom box to maintain the aspect ratio of the frame
+    updated_zoom_box_xyxy = adjust_zoom_box_aspect_ratio(frame, updated_zoom_box_xyxy)
+
+    # Ensure the zoom box stays within the frame boundaries
+    updated_zoom_box_xyxy = keep_zoom_box_inside_frame(updated_zoom_box_xyxy[:2], updated_zoom_box_xyxy[2:], frame)
+
+    # Return the updated zoom box coordinates as a flattened list of integers
+    return np.array(updated_zoom_box_xyxy).flatten().astype(int).tolist()
+
+
+def adjust_zoom_box_aspect_ratio(frame: np.ndarray, zoom_box_xyxy: list) -> list:
+    """Adjust the zoom box to have the same center but with the same height-width ratio as the frame.
+
+    Args:
+        frame (np.ndarray): The video frame.
+        zoom_box_xyxy (list): The original zoom box coordinates in xyxy format.
+
+    Returns:
+        list: The adjusted zoom box coordinates in xyxy format.
+    """
+    frame_height, frame_width = frame.shape[:2]
+    aspect_ratio = frame_width / frame_height
+
+    cx, cy, w, h = convert_xyxy_to_centerxy(zoom_box_xyxy)
+
+    if w / h > aspect_ratio:
+        new_w = w
+        new_h = int(new_w / aspect_ratio)
+    else:
+        new_h = h
+        new_w = int(new_h * aspect_ratio)
+
+    new_zoom_box_xyxy = convert_centrxywh_to_xyxy([cx, cy, new_w, new_h])
+    new_zoom_box_xyxy = keep_zoom_box_inside_frame(new_zoom_box_xyxy[:2], new_zoom_box_xyxy[2:], frame)
+    return np.array(new_zoom_box_xyxy).flatten().astype(int).tolist()
+
+
+
+def convert_xyxy_to_centerxy(box: list) -> list:
+    """Convert bounding box coordinates from xyxy to centerxy format.
+    
+    Args:
+        box (list): The bounding box coordinates in xyxy format.
+    
+    Returns:
+        list: The bounding box coordinates in centerxy format.
+    """
+    x1, y1, x2, y2 = box
+    cx = (x1 + x2) // 2
+    cy = (y1 + y2) // 2
+    w = x2 - x1
+    h = y2 - y1
+    return [cx, cy, w, h]
+
+
+def convert_centrxywh_to_xyxy(box: list) -> list:
+    """Convert bounding box coordinates from centerxy to xyxy format.
+
+    Args:
+        box (list): The bounding box coordinates in centerxy format.
+
+    Returns:
+        list: The bounding box coordinates in xyxy format.
+    """
+    cx, cy, w, h = box
+    x1 = cx - w // 2
+    y1 = cy - h // 2
+    x2 = cx + w // 2
+    y2 = cy + h // 2
+    return [x1, y1, x2, y2]

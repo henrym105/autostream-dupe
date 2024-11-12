@@ -13,6 +13,7 @@ setup(
         "moviepy",
         "tqdm",
     ],
+    python_requires="==3.11.0",
     entry_points={
         "console_scripts": [
             "run-zoom=src.main:main",
