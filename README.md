@@ -4,7 +4,8 @@ This project uses AI to dynamically apply digital pan and zoom effects to a fixe
 
 It automatically keeps the players in frame so you can focus on watching the game! This eliminates the need to have a someone manually operating the camera during a game, ideal for low budget productions like little league, rec-league, and high school sports. It leverages the YOLO model for human detection and OpenCV for video processing.
 
-🎥 **Check out a demo of the project in action on [YouTube](https://www.youtube.com/watch?v=example_video)!** 🎥
+🎥 **Check out a demo of the project in action on 
+[YouTube](https://youtu.be/h5e49ZC-Y04?si=ygQA0ekJJCVRzF7T)!** 🎥
 
 
 ## For any inquiries or feedback, please contact:
@@ -68,6 +69,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## TODO
 
+- [ ] Stabilize the zoom area -- still quite shaky
 - [ ] Implement real-time streaming and processing.
 - [ ] Enhance the user interface for easier configuration.
 - [ ] Optimize the video processing pipeline for performance.

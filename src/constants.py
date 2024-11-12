@@ -17,7 +17,8 @@ CAMERA_ZOOM_PADDING = 10
 CAMERA_ZOOM_PADDING_PCT = 0.10
 
 # Smoothing parameters for zoom transition
-ZOOM_SMOOTHING_ALPHA = 0.01
+FRAME_MAX_SHIFT_PCT = 0.003
+FRAME_MAX_ZOOM_CHANGE_PCT = .01
 ZOOM_SMOOTHING_FRAME_COUNT = 1
 
 # Minimum width percentage for zoom
@@ -27,4 +28,4 @@ ZOOM_MIN_WIDTH_PCT = 0.5
 YOLO_VERSION = 11
 
 # Confidence threshold for detecting humans using YOLO
-YOLO_HUMAN_CONFIDENCE_THRESHOLD = 0.5
+YOLO_HUMAN_CONFIDENCE_THRESHOLD = 0.15
