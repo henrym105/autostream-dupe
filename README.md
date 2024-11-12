@@ -72,7 +72,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgements
 
-- [YOLO](https://pjreddie.com/darknet/yolo/)
+- [YOLO](https://docs.ultralytics.com/models/yolo11/)
 - [OpenCV](https://opencv.org/)
 - [Python](https://www.python.org/)
 - Special thanks to the open-source community for their contributions.
