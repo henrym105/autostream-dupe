@@ -45,7 +45,7 @@ def load_yolo_model(version: int = YOLO_VERSION) -> YOLO:
     return model
 
 # Run inference on video frames using YOLO
-def get_all_yolo_bounding_boxes(frame, model: YOLO, class_id=0) -> tuple:
+def get_all_yolo_bounding_boxes(frame, model: YOLO, class_id=0, court_coords: np.ndarray = None) -> tuple:
     """Get the bounding boxes of humans detected in the frame using YOLO model.
 
     Args:
@@ -59,8 +59,9 @@ def get_all_yolo_bounding_boxes(frame, model: YOLO, class_id=0) -> tuple:
     boxes = []
 
     # Load court coordinates
-    with open(TEMP_CORNERS_COORDS_PATH, 'r') as f:
-        court_coords = json.load(f)
+    if court_coords is None:
+        with open(TEMP_CORNERS_COORDS_PATH, 'r') as f:
+            court_coords = json.load(f)
     court_polygon = np.array(court_coords, dtype=np.int32)
 
     # Run inference on the frame

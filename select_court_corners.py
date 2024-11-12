@@ -8,6 +8,7 @@ from src.constants import TEMP_CORNERS_COORDS_PATH
 # Initialize a list to store the coordinates
 coordinates = []
 
+
 def click_event(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
         coordinates.append((x, y))
@@ -30,18 +31,6 @@ def rearrange_corner_coords(coordinates) -> list:
     Returns:
         dict: Dictionary containing the rearranged coordinates
     """
-    # sorted_by_y = sorted(coordinates, key=lambda x: x[1])
-    # top_two = sorted_by_y[:2]
-    # bottom_two = sorted_by_y[2:]
-
-    # top_left = min(top_two, key=lambda x: x[0])
-    # top_right = max(top_two, key=lambda x: x[0])
-    # bottom_left = min(bottom_two, key=lambda x: x[0])
-    # bottom_right = max(bottom_two, key=lambda x: x[0])
-
-    # return [top_left, top_right, bottom_right, bottom_left]
-    
-    # # Find top-left point
     top_left = min(coordinates, key=lambda x: (x[1], x[0]))
     
     def angle(point):
@@ -57,16 +46,8 @@ def rearrange_corner_coords(coordinates) -> list:
     return [top_left] + sorted_points
 
 
-def select_court_corners(video_path):
-    cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        print(f"Error: Unable to open video file {video_path}")
-        return
-
-    ret, frame = cap.read()
-    if not ret:
-        print("Error: Unable to read the first frame.")
-        return
+def select_court_corners(frame):
+    global coordinates
 
     cv2.imshow("Select Court Corners", frame)
     cv2.setMouseCallback("Select Court Corners", click_event, frame)
@@ -78,7 +59,6 @@ def select_court_corners(video_path):
     cv2.destroyAllWindows()
 
     coordinates = rearrange_corner_coords(coordinates)
-    print(f"Determined corners: {coordinates}")
 
     # Create the directory if it doesn't exist
     os.makedirs(os.path.dirname(TEMP_CORNERS_COORDS_PATH), exist_ok=True)
@@ -87,8 +67,16 @@ def select_court_corners(video_path):
         json.dump(coordinates, f)
         
     print(f"Coordinates saved to {TEMP_CORNERS_COORDS_PATH}")
+    return None
+    # return coordinates
 
 
 if __name__ == "__main__":
-    video_path = os.path.join(os.getcwd(), "data", "raw", "example_video.mp4")
-    select_court_corners(video_path)
+    video_path = os.path.join(os.getcwd(), "data", "raw", "example_video_2.mp4")
+    cap = cv2.VideoCapture(video_path)
+    ret, frame = cap.read()
+
+    select_court_corners(frame)
+
+    cap.release()
+    cv2.destroyAllWindows()

@@ -29,13 +29,14 @@ from src.camera_utils import (
 from ultralytics import YOLO
 from select_court_corners import select_court_corners
 
+# coordinates = []
 
 def read_video(
     video_path: str, 
     yolo_model: YOLO, 
     draw_player_boxes: bool = True, 
     crop_video: bool = True, 
-    save_video_local: bool = SAVE_VIDEO_LOCAL,
+    save_to_path: str = None,
     n: int = ZOOM_SMOOTHING_FRAME_COUNT,
 ) -> None:
     """Read a video file and process each frame to detect players and zoom in on them.
@@ -47,7 +48,7 @@ def read_video(
         crop_video (bool, optional): Whether to crop the video to the zoom box. Defaults to True.
         n (int, optional): The number of frames to smooth the zoom box over. Defaults to ZOOM_SMOOTHING_FRAME_COUNT.
     """
-    select_court_corners(video_path)
+    # global coordinates
 
     # open the video file
     cap = cv2.VideoCapture(video_path)
@@ -63,10 +64,8 @@ def read_video(
     current_frame_num = 0
 
     # Define the output video path
-    output_video_path = os.path.join(CUR_DIR, "data", "processed", os.path.basename(video_path))
-    # fourcc = cv2.VideoWriter_fourcc(*'mp4v')
     fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
-    out = cv2.VideoWriter(output_video_path, fourcc, source_fps, (frame_display_size_h_w[1], frame_display_size_h_w[0]))
+    out = cv2.VideoWriter(save_to_path, fourcc, source_fps, (frame_display_size_h_w[1], frame_display_size_h_w[0]))
 
     prev_zoom_box = None
     while cap.isOpened():
@@ -75,6 +74,10 @@ def read_video(
         if not ret or (cv2.waitKey(25) & 0xFF == ord('q')):
             break
         
+        # pause on the first frame and select the corner points for the court, save them to a file
+        if current_frame_num == 0:
+            select_court_corners(frame)
+
         # ------------------------------------------------
         # Process the Frame
         # ------------------------------------------------
@@ -87,6 +90,8 @@ def read_video(
         else:
             # this is an even frame, so use the bounding boxes from the previous frame
             boxes = prev_boxes
+        
+        print(boxes)
         
         if boxes and draw_player_boxes:
             frame = draw_bounding_boxes(frame, boxes, label="player")
@@ -117,7 +122,7 @@ def read_video(
         cv2.imshow('Frame', frame)
 
         # Write the frame to the output video
-        if save_video_local:
+        if SAVE_VIDEO_LOCAL:
             out.write(frame)
 
         # save this frame as reference for the next one
@@ -137,4 +142,4 @@ if __name__ == "__main__":
 
     yolo_model = load_yolo_model()
 
-    read_video(src_path, yolo_model, DRAW_PLAYER_BOXES, CROP_VIDEO, SAVE_VIDEO_LOCAL, save_path)
+    read_video(src_path, yolo_model, DRAW_PLAYER_BOXES, CROP_VIDEO, save_path)

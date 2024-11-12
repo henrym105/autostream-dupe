@@ -13,7 +13,7 @@ CUR_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TEMP_CORNERS_COORDS_PATH = os.path.join(CUR_DIR, "data", "temp", "court_corners_coords_xy.txt")
 
 # Padding for camera zoom
-CAMERA_ZOOM_PADDING = 30
+CAMERA_ZOOM_PADDING = 10
 
 # Smoothing parameters for zoom transition
 ZOOM_SMOOTHING_ALPHA = 0.01

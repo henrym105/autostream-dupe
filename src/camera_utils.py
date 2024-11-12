@@ -122,17 +122,13 @@ def calculate_optimal_zoom_area(frame: np.ndarray, player_positions_xyxy: list, 
     center_x = (x_min + x_max) // 2
     center_y = (y_min + y_max) // 2
 
-    # Calculate the height of the zoom box to keep the aspect ratio with this width value
-    zoom_width = min_width_zoom_box
-    zoom_height = np.rint(min_width_zoom_box / aspect_ratio)
+    # Calculate the top-left and bottom-right corners of the zoom box
+    tl_x = max(0, center_x - zoom_width // 2)
+    tl_y = max(0, center_y - zoom_height // 2)
+    br_x = min(frame_width, center_x + zoom_width // 2)
+    br_y = min(frame_height, center_y + zoom_height // 2)
 
-    # top left corner
-    tl_x = int(max(0, center_x - zoom_width // 2))
-    tl_y = int(max(0, center_y - zoom_height // 2))
-    br_x = int(min(frame_width, center_x + zoom_width // 2))
-    br_y = int(min(frame_height, center_y + zoom_height // 2))
-
-    # tl_point, br_point = keep_zoom_box_inside_frame((tl_x, tl_y), (br_x, br_y), frame_width, frame_height)
+    # Ensure the zoom box stays within the frame boundaries
     tl_point, br_point = keep_zoom_box_inside_frame((tl_x, tl_y), (br_x, br_y), frame)
 
     return [tl_point[0], tl_point[1], br_point[0], br_point[1]]
@@ -187,12 +183,12 @@ def linear_smooth_zoom_box_shift(
         np.ndarray: The updated zoom box coordinates in xyxy format.
     """
     # Calculate the difference between the previous and new zoom box coordinates
-    # Can isolate the first two coordinates (top left corner), shift amount is same for all corners.
     resulting_shift_xy = np.array([])
+    # for i in range(len(prev_zoom_box_xyxy)):
     for i in range(len(prev_zoom_box_xyxy)):
-        adj_i = i % 2
-        desired_shift = new_zoom_box_xyxy[adj_i] - prev_zoom_box_xyxy[adj_i]
-        max_shift = max_shift_pct * frame.shape[adj_i]
+        coord_xy = i % 2
+        desired_shift = new_zoom_box_xyxy[i] - prev_zoom_box_xyxy[i]
+        max_shift = max_shift_pct * frame.shape[coord_xy]
         result_this_axis = np.clip(desired_shift, -max_shift, max_shift)
         resulting_shift_xy = np.append(resulting_shift_xy, result_this_axis)
 
@@ -200,6 +196,5 @@ def linear_smooth_zoom_box_shift(
 
     updated_coords = keep_zoom_box_inside_frame(updated_zoom_box_xyxy[:2], updated_zoom_box_xyxy[2:], frame)
     updated_zoom_box_xyxy = np.array(updated_coords).flatten()
-    # updated_zoom_box_xyxy = convert_elements_to_int(updated_zoom_box_xyxy)
 
     return updated_zoom_box_xyxy.astype(int).tolist()
