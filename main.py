@@ -97,10 +97,10 @@ def read_video(
 
 
 if __name__ == "__main__":
-    src_path = os.path.join(CUR_DIR, "data", "raw", "example_video.mp4")
-    save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_autozoom.mp4")
-    # src_path = os.path.join(CUR_DIR, "data", "raw", "example_video_2.mp4")
-    # save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_2_autozoom.mp4")
+    # src_path = os.path.join(CUR_DIR, "data", "raw", "example_video.mp4")
+    # save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_autozoom.mp4")
+    src_path = os.path.join(CUR_DIR, "data", "raw", "example_video_2.mp4")
+    save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_2_autozoom.mp4")
 
     yolo_model = load_yolo_model()
 

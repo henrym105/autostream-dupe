@@ -41,19 +41,19 @@ if __name__ == "__main__":
     # --------------------
     # EXAMPLE Video 1
     # --------------------
-    video_url = "https://www.youtube.com/watch?app=desktop&v=Yjni2VguRLU"
-    desired_resolution = "720p"
-    start_time = 15  # Start at 30 seconds
-    end_time = 75    # End at 60 seconds
-    outpath_name = "example_video"
+    # video_url = "https://www.youtube.com/watch?app=desktop&v=Yjni2VguRLU"
+    # desired_resolution = "720p"
+    # start_time = 15  # Start at 30 seconds
+    # end_time = 75    # End at 60 seconds
+    # outpath_name = "example_video"
 
     # --------------------
     # EXAMPLE Video 2
     # --------------------
-    # video_url = "https://www.youtube.com/watch?v=nHwDPBLeIvY"
-    # desired_resolution = "720p"
-    # start_time = 45 
-    # end_time = 75  
-    # outpath_name = "example_video_2"
+    video_url = "https://www.youtube.com/watch?v=nHwDPBLeIvY"
+    desired_resolution = "720p"
+    start_time = 45 
+    end_time = 75  
+    outpath_name = "example_video_2"
 
     download_youtube_video(video_url, outpath_name, desired_resolution, start_time, end_time)
