@@ -4,8 +4,9 @@ This project uses AI to dynamically apply digital pan and zoom effects to a fixe
 
 It automatically keeps the players in frame so you can focus on watching the game! This eliminates the need to have a someone manually operating the camera during a game, ideal for low budget productions like little league, rec-league, and high school sports. It leverages the YOLO model for human detection and OpenCV for video processing.
 
-🎥 **Check out a demo of the project in action on 
-[YouTube](https://youtu.be/h5e49ZC-Y04?si=ygQA0ekJJCVRzF7T)!** 🎥
+🎥 **Check out a demo of the project in action on Youtube!** 🎥
+- [Demo - Example #1](https://youtu.be/HgPXjq6l1ZQ)
+- [Demo - Example #2](https://youtu.be/h5e49ZC-Y04)
 
 
 Created as an MVP that mimics the AutoStream feature in GameChanger's live stream app.
