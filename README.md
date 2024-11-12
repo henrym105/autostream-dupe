@@ -2,6 +2,8 @@
 
 This project uses AI to dynamically apply a digital pan and zoom to a video of any land field sport (basketball, soccer, football, hockey) so that the players are always in frame. This eliminates the need to have a someone manually operating the camera during a game, ideal for low budget productions like little league and high school sports. It leverages the YOLO model for human detection and OpenCV for video processing.
 
+Created as an MVP that mimics the AutoStream feature in GameChanger's live stream app.
+
 ## For any inquiries or feedback, please contact:
 
 - **Name:** Henry Marquardt  
