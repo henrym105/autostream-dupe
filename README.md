@@ -1,6 +1,11 @@
 # AI-Powered Live Stream Automatic Pan / Zoom 
 
-This project uses AI to dynamically apply a digital pan and zoom to a video of any land field sport (basketball, soccer, football, hockey) so that the players are always in frame. This eliminates the need to have a someone manually operating the camera during a game, ideal for low budget productions like little league and high school sports. It leverages the YOLO model for human detection and OpenCV for video processing.
+This project uses AI to dynamically apply digital pan and zoom effects to a fixed-perspective video of any land field sport (basketball, soccer, football, hockey). 
+
+It automatically keeps the players in frame so you can focus on watching the game! This eliminates the need to have a someone manually operating the camera during a game, ideal for low budget productions like little league, rec-league, and high school sports. It leverages the YOLO model for human detection and OpenCV for video processing.
+
+🎥 **Check out a demo of the project in action on [YouTube](https://www.youtube.com/watch?v=example_video)!** 🎥
+
 
 ## For any inquiries or feedback, please contact:
 
@@ -12,29 +17,34 @@ This project uses AI to dynamically apply a digital pan and zoom to a video of a
 ## Project Setup
 
 ### 1. **Clone the repository:**
-    ```sh
-    git clone https://github.com/henrym105/autostream-dupe.git
-    cd autostream-dupe
-    ```
+```shell
+git clone https://github.com/henrym105/autostream-dupe.git
+cd autostream-dupe
+```
 
 ### 2. **Install the required dependencies:**
-    ```sh
-    pip install -r requirements.txt
-    ```
 
-### 3. **(OPTIONAL) Download your own YouTube video clip:**
-    ```sh
-    python youtube_download.py
-    ```
-    - A small sample video `data/raw/example_video.mp4` is included in the repo for you convenience and will be used by default
-    - in `youtube_download.py`, change the params in main function for url, desired_resolution, start and stop time (to create a short clip)
+- *project built with python 3.11.0*
+
+```shell
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 3. **(OPTIONAL) Download any video clip from Youtube!**
+```shell
+python youtube_download.py
+```
+- A small sample video `example_video.mp4` and `example_video_2.mp4` is included in the data/raw/  path of this repo for your convenience and will be used by default.
+- in `youtube_download.py`, change the params in main function for url, desired_resolution, start and stop time (to create a short clip)
 
 
 ### 4. **Run the application:**
-    ```sh
-    python main.py
-    ```
-    - NOTE: will automatically save a local copy of the **Yolov11 nano** model weights from ultralytics, but you can change the model being used in `constants.py`
+```shell
+python main.py
+```
+- NOTE: will automatically save a local copy of the `Yolov11 nano` model weights from Ultralytics, but you can change the model being used in `constants.py`
 
 
 ## Contributing

@@ -82,7 +82,7 @@ def draw_bounding_boxes(frame: np.ndarray, boxes: list, label: str = "", color: 
     """Draw bounding boxes on the frame."""
     for box in boxes:
         tl_point, br_point = box[:2], box[2:]
-        cv2.rectangle(frame, tl_point, br_point, color, 2)
+        cv2.rectangle(frame, tl_point, br_point, color, 1)
         if label:
             cv2.putText(frame, label, (tl_point[0], tl_point[1] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
     return frame

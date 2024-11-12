@@ -100,7 +100,10 @@ def smooth(trajectory, radius=30):
     return smoothed_trajectory
 
 if __name__ == "__main__":
-    src_path = os.path.join(CUR_DIR, "data", "processed", "example_video.mp4")
+    src_path = os.path.join(CUR_DIR, "data", "processed", "example_video_autozoom.mp4")
     dst_path = os.path.join(CUR_DIR, "data", "processed", "example_video_stabilized.mp4")
+    # src_path = os.path.join(CUR_DIR, "data", "processed", "example_video_2_autozoom.mp4")
+    # dst_path = os.path.join(CUR_DIR, "data", "processed", "example_video_2_stabilized.mp4")
+
     
     stabilize_video(src_path, dst_path)

@@ -34,40 +34,30 @@ from select_court_corners import select_court_corners
 def read_video(
     video_path: str, 
     yolo_model: YOLO, 
-    draw_player_boxes: bool = True, 
-    crop_video: bool = True, 
     save_to_path: str = None,
-    n: int = ZOOM_SMOOTHING_FRAME_COUNT,
 ) -> None:
     """Read a video file and process each frame to detect players and zoom in on them.
 
     Args:
         video_path (str): The path to the video file.
         yolo_model (YOLO): The YOLO model for object detection.
-        draw_player_boxes (bool, optional): Whether to draw bounding boxes around players. Defaults to True.
-        crop_video (bool, optional): Whether to crop the video to the zoom box. Defaults to True.
-        n (int, optional): The number of frames to smooth the zoom box over. Defaults to ZOOM_SMOOTHING_FRAME_COUNT.
+        save_to_path (str, optional): The path to save the output video. Defaults to None.
     """
-    # global coordinates
-
-    # open the video file
+    # open the video file and read the first frame
     cap = cv2.VideoCapture(video_path)
-    source_fps = cap.get(cv2.CAP_PROP_FPS)
-
-    # read the first frame
     ret, prev_frame = cap.read()
 
     # initialize variables
     frame_display_size_h_w = prev_frame.shape[:2]
-    
     prev_boxes = []
     current_frame_num = 0
+    prev_zoom_box = None
 
     # Define the output video path
     fourcc = int(cap.get(cv2.CAP_PROP_FOURCC))
+    source_fps = cap.get(cv2.CAP_PROP_FPS)
     out = cv2.VideoWriter(save_to_path, fourcc, source_fps, (frame_display_size_h_w[1], frame_display_size_h_w[0]))
 
-    prev_zoom_box = None
     while cap.isOpened():
         # read the next frame from the video file
         ret, frame = cap.read()
@@ -81,40 +71,34 @@ def read_video(
         # ------------------------------------------------
         # Process the Frame
         # ------------------------------------------------
-        # find the human bounding boxes on the 
-        if current_frame_num % 2 == 0:
-            # run inference on the frame
+        if current_frame_num % 1 == 0: # run inference on the frame
             boxes = get_all_yolo_bounding_boxes(frame, yolo_model)
             # save the bounding boxes for the next frame
             prev_boxes = boxes
         else:
             # this is an even frame, so use the bounding boxes from the previous frame
             boxes = prev_boxes
-        
 
-        if boxes and draw_player_boxes:
-            frame = draw_bounding_boxes(frame, boxes, label="player")
+        if boxes and DRAW_PLAYER_BOXES:
+            frame = draw_bounding_boxes(frame, boxes, color=(0, 255, 255))  # Yellow color for human bounding boxes
         
         if DRAW_COURT_BOX:
             frame = draw_court_outline(frame)
-
 
         # zoom_box in format [tl_x, tl_y, w, h]
         zoom_box: list = calculate_optimal_zoom_area(frame, boxes, frame_display_size_h_w)        
         
         # skip the smoothing algo on the first frame
-        # if prev_zoom_box is not None: 
-        #     zoom_box = linear_smooth_zoom_box_shift(frame, prev_zoom_box, zoom_box)
+        if prev_zoom_box is not None: 
+            zoom_box = linear_smooth_zoom_box_shift(frame, prev_zoom_box, zoom_box)
         prev_zoom_box = zoom_box.copy()
-
-        # print(f"Current zoom box: {zoom_box}")
 
         # frame = smooth_transition(prev_frame, frame, alpha=ZOOM_SMOOTHING_ALPHA)
 
-        if zoom_box and draw_player_boxes:
+        if zoom_box and not CROP_VIDEO:
             frame = draw_bounding_boxes(frame, [zoom_box], label="zoom_box", color=(0, 0, 255))
         
-        if crop_video:
+        elif CROP_VIDEO:
             frame = zoom_frame(frame, zoom_box)
 
         # Display the resulting frame
@@ -136,9 +120,11 @@ def read_video(
 
 if __name__ == "__main__":
     # src_path = os.path.join(CUR_DIR, "data", "raw", "example_video.mp4")
+    # save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_autozoom.mp4")
     src_path = os.path.join(CUR_DIR, "data", "raw", "example_video_2.mp4")
     save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_2_autozoom.mp4")
 
     yolo_model = load_yolo_model()
 
-    read_video(src_path, yolo_model, DRAW_PLAYER_BOXES, CROP_VIDEO, save_path)
+    # read_video(src_path, yolo_model, DRAW_PLAYER_BOXES, save_path)
+    read_video(src_path, yolo_model, save_path)
