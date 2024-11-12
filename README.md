@@ -8,7 +8,9 @@ Created as an MVP that mimics the AutoStream feature in GameChanger's live strea
 
 - **Name:** Henry Marquardt  
 - **Email:** [henrymarquardt1@gmail.com](mailto:henrymarquardt1@gmail.com)  
-- **GitHub:** [henrym105](https://github.com/henrym105)
+- **GitHub:**
+    - Personal Account: [henrym105](https://github.com/henrym105)
+    - Academic Account (Berkeley MIDS): [hmarquardtMIDS](https://github.com/hmarquardtMIDS)
 - **LinkedIn:** [Henry Marquardt](https://www.linkedin.com/in/henry-marquardt/)
 
 ## Project Setup
