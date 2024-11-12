@@ -11,7 +11,7 @@ It automatically keeps the players in frame so you can focus on watching the gam
 
 🎥 **Check out a demo of the project in action on Youtube!** 🎥
 - [Demo - Example #1](https://youtu.be/HgPXjq6l1ZQ)
-- [Demo - Example #2](https://youtu.be/h5e49ZC-Y04)
+- [Demo - Example #2](https://youtu.be/SQP26MghR48)
 
 
 Created as an MVP that mimics the AutoStream feature in GameChanger's live stream app.
