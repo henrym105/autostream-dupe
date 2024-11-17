@@ -2,26 +2,30 @@
 
 import cv2
 import os
+from ultralytics import YOLO
+
 from src.constants import (
     CROP_VIDEO,
     CUR_DIR, 
     DRAW_PLAYER_BOXES,
     DRAW_COURT_BOX,
     SAVE_VIDEO_LOCAL,
+    TEMP_CORNERS_COORDS_PATH,
 )
 from src.yolo_funcs import (
     load_yolo_model, 
     draw_bounding_boxes,
     draw_court_outline,
-    get_all_yolo_bounding_boxes, 
+    get_all_yolo_bounding_boxes,
+    create_minimap,  # Add this import
 )
 from src.camera_utils import (
     calculate_optimal_zoom_area, 
     linear_smooth_zoom_box_shift,
     zoom_frame,
 )
-from ultralytics import YOLO
-from select_court_corners import select_court_corners
+from src.select_court_corners import select_court_corners, infer_4_corners
+
 
 
 def read_video(
@@ -38,6 +42,9 @@ def read_video(
     """
     # open the video file and read the first frame
     cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        print("Error opening video file.")
+        return
     ret, prev_frame = cap.read()
 
     # initialize variables
@@ -57,7 +64,12 @@ def read_video(
         
         # pause on the first frame and select the corner points for the court, save them to a file
         if current_frame_num == 0:
-            select_court_corners(frame)
+            all_edge_points_xy = select_court_corners(frame)
+            four_corner_points_xy = infer_4_corners(all_edge_points_xy)
+            for point in four_corner_points_xy:
+                cv2.circle(frame, tuple(point), 5, (0, 0, 255), -1)  # Red color for corner points
+
+        # input("Press Enter to continue...")
 
         # Update the human bounding boxes and zoom-area bounding box every frame
         player_bboxes = get_all_yolo_bounding_boxes(frame, yolo_model)
@@ -77,6 +89,10 @@ def read_video(
             frame = zoom_frame(frame, zoom_bbox)
         else:
             frame = draw_bounding_boxes(frame, [zoom_bbox], label="zoom_box", color=(0, 0, 255))
+
+        # Create and overlay the minimap
+        minimap = create_minimap(frame, four_corner_points_xy, player_bboxes)
+        frame[0:minimap.shape[0], 0:minimap.shape[1]] = minimap
 
         # Display the resulting frame
         cv2.imshow('Frame', frame)
