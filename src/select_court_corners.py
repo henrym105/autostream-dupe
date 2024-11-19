@@ -8,27 +8,31 @@ from src.constants import TEMP_COURT_OUTLINE_COORDS_PATH, TEMP_4_CORNERS_COORDS_
 # Initialize a list to store the coordinates
 coordinates = []
 
-
-def click_event(event, x, y, flags, param):
+def mouse_event(event, x, y, flags, param):
     coordinates = param['coordinates']
     border_size = param['border_size']
+    frame = param['frame']
+    overlay = frame.copy()
 
     if event == cv2.EVENT_LBUTTONDOWN:
         # Adjust coordinates to account for the border
         adjusted_x = x - border_size
         adjusted_y = y - border_size
         coordinates.append((adjusted_x, adjusted_y))
-        if len(coordinates) >= 3:
-            overlay = param['frame'].copy()
-            cv2.fillPoly(overlay, [np.array(coordinates) + border_size], (0, 255, 0))
-            cv2.imshow("Select Court Corners", overlay)
-        else:
-            cv2.circle(param['frame'], (x, y), 5, (0, 255, 0), -1)
-            cv2.imshow("Select Court Corners", param['frame'])
+        cv2.circle(frame, (x, y), 5, (0, 255, 0), -1)
+        cv2.imshow("Select Court Corners", frame)
 
-    elif event == cv2.EVENT_MOUSEMOVE and len(coordinates) > 0:
-        overlay = param['frame'].copy()
+    if event == cv2.EVENT_MOUSEMOVE and len(coordinates) > 0:
         cv2.line(overlay, (coordinates[-1][0] + border_size, coordinates[-1][1] + border_size), (x, y), (0, 255, 0), 2)
+        cv2.imshow("Select Court Corners", overlay)
+
+    if len(coordinates) >= 2:
+        cv2.line(overlay, (coordinates[0][0] + border_size, coordinates[0][1] + border_size), 
+                 (coordinates[1][0] + border_size, coordinates[1][1] + border_size), (0, 255, 0), 2)
+        cv2.imshow("Select Court Corners", overlay)
+
+    if len(coordinates) >= 3:
+        cv2.fillPoly(overlay, [np.array(coordinates) + border_size], (0, 255, 0))
         cv2.imshow("Select Court Corners", overlay)
 
 
@@ -107,7 +111,7 @@ def select_court_corners(frame) -> list:
         'border_size': border_size, 
         'coordinates': coordinates
     }
-    cv2.setMouseCallback("Select Court Corners", click_event, click_params)
+    cv2.setMouseCallback("Select Court Corners", mouse_event, click_params)
     
     while True:
         key = cv2.waitKey(1) & 0xFF
