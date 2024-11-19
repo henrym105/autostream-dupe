@@ -91,8 +91,7 @@ def read_video(
             frame = draw_court_outline(frame)
 
         if DRAW_MINIMAP:
-            
-            M = get_perspective_transform_matrix(four_corner_points_xy, frame.shape[:2])
+            M = get_perspective_transform_matrix(four_corner_points_xy)
             minimap = create_minimap(player_bboxes, M)
 
         if CROP_VIDEO:

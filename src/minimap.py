@@ -14,8 +14,10 @@ def get_perspective_transform_matrix(court_corners):
     Returns:
         numpy.ndarray: The perspective transform matrix (3x3) that maps the court corners to the frame corners.
     """
-    frame = cv2.imread(MINIMAP_TEMPLATE_PNG_PATH)
-    frame_h, frame_w = frame.shape[:2]
+    # minimap = cv2.imread(MINIMAP_TEMPLATE_PNG_PATH)
+    minimap = cv2.imread('/Users/Henry/Desktop/github/autostream-dupe/data/raw/basketball_court_outline.png')
+
+    frame_h, frame_w = minimap.shape[:2]
 
     # Define destination corners (tl, tr, br, bl) as the full size of the input court outline
     src_corners = np.array(court_corners, dtype=np.int32)
@@ -44,6 +46,7 @@ def create_minimap(player_bboxes, transform_matrix) -> np.ndarray:
         np.ndarray: The minimap image.
     """
     minimap = cv2.imread('/Users/Henry/Desktop/github/autostream-dupe/data/raw/basketball_court_outline.png')
+    # minimap = cv2.imread('/Users/Henry/Desktop/github/autostream-dupe/data/raw/basketball_court_outline.png')
     minimap = np.array(minimap)
 
     # Get player locations and convert to NumPy array
@@ -53,9 +56,10 @@ def create_minimap(player_bboxes, transform_matrix) -> np.ndarray:
     transformed_player_coords = cv2.perspectiveTransform(player_locations_xy, transform_matrix)
 
     # Draw players on the minimap
-    for point in transformed_player_coords:
-        x, y = int(point[0][0]), int(point[0][1])
-        cv2.circle(minimap, (x, y), radius=5, color=(255, 0, 0), thickness=2)
+    if transformed_player_coords is not None:
+        for point in transformed_player_coords:
+            x, y = int(point[0][0]), int(point[0][1])
+            cv2.circle(minimap, (x, y), radius=5, color=(255, 0, 0), thickness=2)
 
     return minimap
 
