@@ -3,7 +3,7 @@ import os
 import json
 import math
 import numpy as np
-from src.constants import TEMP_CORNERS_COORDS_PATH
+from src.constants import TEMP_COURT_OUTLINE_COORDS_PATH, TEMP_4_CORNERS_COORDS_PATH
 
 # Initialize a list to store the coordinates
 coordinates = []
@@ -71,12 +71,12 @@ def select_court_corners(frame) -> list:
     coordinates = rearrange_corner_coords(coordinates)
 
     # Create the directory if it doesn't exist
-    os.makedirs(os.path.dirname(TEMP_CORNERS_COORDS_PATH), exist_ok=True)
+    os.makedirs(os.path.dirname(TEMP_COURT_OUTLINE_COORDS_PATH), exist_ok=True)
 
-    with open(TEMP_CORNERS_COORDS_PATH, 'w') as f:
+    with open(TEMP_COURT_OUTLINE_COORDS_PATH, 'w') as f:
         json.dump(coordinates, f)
         
-    print(f"Coordinates saved to {TEMP_CORNERS_COORDS_PATH}")
+    print(f"Coordinates saved to {TEMP_COURT_OUTLINE_COORDS_PATH}")
     return coordinates
 
 
@@ -99,6 +99,10 @@ def infer_4_corners(all_points: list) -> list[int]:
     
     # Sort the points based on their distance from the center
     all_points.sort(key=lambda pt: math.sqrt((pt[0] - center_x) ** 2 + (pt[1] - center_y) ** 2))
+    
+    # Save the 4 corner points to a file
+    with open(TEMP_4_CORNERS_COORDS_PATH, 'w') as f:
+        json.dump(all_points[:4], f)
     
     # Return the 4 corner points
     return all_points[:4]

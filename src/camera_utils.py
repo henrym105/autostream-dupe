@@ -267,3 +267,16 @@ def convert_centrxywh_to_xyxy(box: list) -> list:
     x2 = cx + w // 2
     y2 = cy + h // 2
     return [x1, y1, x2, y2]
+
+
+def get_bbox_bottom_center_xy(box: list) -> tuple:
+    """Get the bottom center coordinates of the bounding box.
+    
+    Args:
+        box (list): List of bounding box coordinates.
+
+    Returns:
+        tuple: (x, y) coordinates for the middle point of the bottom line, representing 
+        where the player is standing on the court/field. 
+    """
+    return (int((box[0] + box[2]) / 2), box[3])

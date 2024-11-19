@@ -3,6 +3,8 @@ import os
 # Runtime options
 DRAW_PLAYER_BOXES = True
 DRAW_COURT_BOX = True
+DRAW_MINIMAP = True
+MINIMAP_SIZE = 0.2
 CROP_VIDEO = True
 SAVE_VIDEO_LOCAL = True
 
@@ -10,7 +12,8 @@ SAVE_VIDEO_LOCAL = True
 CUR_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Path to the temporary file storing the corner coordinates
-TEMP_CORNERS_COORDS_PATH = os.path.join(CUR_DIR, "data", "temp", "court_corners_coords_xy.txt")
+TEMP_COURT_OUTLINE_COORDS_PATH = os.path.join(CUR_DIR, "data", "temp", "court_outline_coords_xy.txt")
+TEMP_4_CORNERS_COORDS_PATH = os.path.join(CUR_DIR, "data", "temp", "court_4_corners_coords_xy.txt")
 
 # Padding for camera zoom
 CAMERA_ZOOM_PADDING = 10
