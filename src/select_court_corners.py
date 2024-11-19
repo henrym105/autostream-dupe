@@ -77,7 +77,22 @@ def add_border_to_frame(frame, border_ratio=0.2):
     return cv2.copyMakeBorder(frame, border_size, border_size, border_size, border_size, cv2.BORDER_CONSTANT, value=[0, 0, 0])
 
 
-def select_court_corners(frame) -> list:
+def add_instructions_to_frame(frame: np.ndarray) -> np.ndarray:
+    """Write usage instructions at top of the frame across multiple lines."""
+
+    instructions = [
+        "Click on the court corners in clockwise order starting from the far-left corner.",
+        "Click enter to finish."
+    ]
+    y0, dy = 30, 30
+    for i, line in enumerate(instructions):
+        y = y0 + i * dy
+        cv2.putText(frame, line, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    return frame
+
+
+
+def select_court_corners(frame, border_ratio=0.2) -> list:
     """Allows the user to manually select the corners of a court in a given frame.
     This function displays the provided frame in a window and allows the user to 
     click on the corners of the court. The coordinates of the selected points are 
@@ -86,26 +101,20 @@ def select_court_corners(frame) -> list:
 
     Args:
         frame (numpy.ndarray): The image frame in which the court corners are to be selected.
+        border_ratio (float): The ratio of the border size to the width of the frame.
+
+    Returns:
+        list: List of (x, y) coordinates of the selected court corners.
     """
     global coordinates
     
-    border_ratio = 0.2
     frame_with_border = add_border_to_frame(frame, border_ratio)
     border_size = int(frame.shape[1] * border_ratio)
-    print(f"{border_size = }")
 
-    # Display instructions on the frame
-    instructions = [
-        "Click on the court corners in clockwise order starting from the far-left corner.",
-        "Click enter to finish."
-    ]
-    y0, dy = 30, 30
-    for i, line in enumerate(instructions):
-        y = y0 + i * dy
-        cv2.putText(frame_with_border, line, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
+    frame_with_border = add_instructions_to_frame(frame_with_border)
+    
     cv2.imshow("Select Court Corners", frame_with_border)
 
-    # cv2.imshow("Select Court Corners", frame_with_border)
     click_params = {
         'frame': frame_with_border, 
         'border_size': border_size, 

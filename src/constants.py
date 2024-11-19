@@ -5,7 +5,7 @@ DRAW_PLAYER_BOXES = True
 DRAW_COURT_BOX = True
 DRAW_MINIMAP = True
 CROP_VIDEO = False
-SAVE_VIDEO_LOCAL = False
+SAVE_VIDEO_LOCAL = True
 
 # Define the current directory as a constant
 CUR_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

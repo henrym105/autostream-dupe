@@ -76,14 +76,14 @@ def read_video(
             # placeholder for future func to handle when >4 court points are input. 
             four_corner_points_xy = all_edge_points_xy.copy() 
 
+            # Homography matrix for creating the minimap, camera is fixed so only need this on first frame. 
+            M = get_perspective_transform_matrix(four_corner_points_xy)
+
         # Update the human bounding boxes and zoom-area bounding box every frame
         player_bboxes = get_all_yolo_bounding_boxes(frame, yolo_model)
         zoom_bbox = calculate_optimal_zoom_area(frame, player_bboxes) 
         zoom_bbox = linear_smooth_zoom_box_shift(frame, prev_zoom_bbox, zoom_bbox)
         
-        # if prev_zoom_bbox is not None:
-        #     zoom_bbox = linear_smooth_zoom_box_shift(frame, prev_zoom_bbox, zoom_bbox)
-
         if DRAW_PLAYER_BOXES:
             frame = draw_bounding_boxes(frame, player_bboxes, color=(0, 255, 255))  # Yellow color for human bounding boxes
 
@@ -91,7 +91,6 @@ def read_video(
             frame = draw_court_outline(frame)
 
         if DRAW_MINIMAP:
-            M = get_perspective_transform_matrix(four_corner_points_xy)
             minimap = create_minimap(player_bboxes, M)
 
         if CROP_VIDEO:
