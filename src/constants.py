@@ -7,8 +7,10 @@ DRAW_MINIMAP = True
 CROP_VIDEO = True
 SAVE_VIDEO_LOCAL = True
 
+# Minimap options
 MINIMAP_POSITION = "bottom_right"
 MINIMAP_ALPHA = 0.9
+MINIMAP_WIDTH = 0.25
 
 # Define the current directory as a constant
 CUR_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

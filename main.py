@@ -102,7 +102,7 @@ def read_video(
             frame = draw_bounding_boxes(frame, [zoom_bbox], label="zoom_box", color=(0, 0, 255))
 
         if DRAW_MINIMAP:
-            frame = add_minimap_to_frame(frame, minimap, position=minimap_position)
+            frame = add_minimap_to_frame(frame=frame, minimap=minimap, minimap_position=minimap_position)
 
         # Display the resulting frame
         cv2.imshow('Frame', frame)
