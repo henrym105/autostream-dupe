@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from src.camera_utils import get_bbox_bottom_center_xy
-from src.constants import MINIMAP_TEMPLATE_PNG_PATH
+from src.constants import MINIMAP_TEMPLATE_PNG_PATH, MINIMAP_ALPHA
 
 
 def get_perspective_transform_matrix(court_corners):
@@ -66,11 +66,14 @@ def create_minimap(player_bboxes, transform_matrix) -> np.ndarray:
     return minimap
 
 
-def add_minimap_to_frame(frame, minimap, minimap_width: float = 0.2) -> np.ndarray:
+def add_minimap_to_frame(frame, minimap, minimap_width: float = 0.2, position: str = "top_left", minimap_alpha: float = MINIMAP_ALPHA) -> np.ndarray:
     """Add a minimap to the frame showing the court and player positions.
     Args:
         frame (np.ndarray): The original video frame.
         minimap (np.ndarray): The minimap image.
+        minimap_width (float, optional): Width of the minimap as ratio of frame width. Defaults to 0.2.
+        position (str, optional): Position of the minimap on the frame. Defaults to "top_left".
+        minimap_alpha (float, optional): Opacity of the minimap overlay. Defaults to 0.9.
     Returns:
         np.ndarray: The frame with the minimap overlay.
     """
@@ -81,7 +84,11 @@ def add_minimap_to_frame(frame, minimap, minimap_width: float = 0.2) -> np.ndarr
     minimap = cv2.resize(minimap, (scaled_w, scaled_h))
 
     overlay = frame.copy()
-    overlay[0:scaled_h, 0:scaled_w] = minimap[..., :3]  # Only take RGB channels
+    if position == "top_left":
+        overlay[0:scaled_h, 0:scaled_w] = minimap[..., :3]  # Only take RGB channels
+    elif position == "bottom_right":
+        overlay[frame_h - scaled_h:frame_h, frame_w - scaled_w:frame_w] = minimap[..., :3]  # Only take RGB channels
+
     minimap_alpha = 0.9
     frame = cv2.addWeighted(overlay, minimap_alpha, frame, 1-minimap_alpha, 0)  # Blend the minimap with the frame
     return frame

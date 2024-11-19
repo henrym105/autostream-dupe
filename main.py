@@ -11,6 +11,7 @@ from src.constants import (
     DRAW_PLAYER_BOXES,
     DRAW_COURT_BOX,
     DRAW_MINIMAP,
+    MINIMAP_POSITION,
     SAVE_VIDEO_LOCAL,
 )
 from src.yolo_funcs import (
@@ -40,6 +41,7 @@ def read_video(
     video_path: str, 
     yolo_model: YOLO, 
     save_to_path: str = None,
+    minimap_position: str = MINIMAP_POSITION
 ) -> None:
     """Read a video file and process each frame to detect players and zoom in on them.
 
@@ -47,6 +49,7 @@ def read_video(
         video_path (str): The path to the video file.
         yolo_model (YOLO): The YOLO model for object detection.
         save_to_path (str, optional): The path to save the output video. Defaults to None.
+        minimap_position (str, optional): Position of the minimap on the frame. Defaults to "top_left".
     """
     # open the video file and read the first frame
     cap = cv2.VideoCapture(video_path)
@@ -99,7 +102,7 @@ def read_video(
             frame = draw_bounding_boxes(frame, [zoom_bbox], label="zoom_box", color=(0, 0, 255))
 
         if DRAW_MINIMAP:
-            frame = add_minimap_to_frame(frame, minimap)
+            frame = add_minimap_to_frame(frame, minimap, position=minimap_position)
 
         # Display the resulting frame
         cv2.imshow('Frame', frame)
@@ -129,4 +132,4 @@ if __name__ == "__main__":
     yolo_model = load_yolo_model()
 
     # read_video(src_path, yolo_model, DRAW_PLAYER_BOXES, save_path)
-    read_video(src_path, yolo_model, save_path)
+    read_video(src_path, yolo_model, save_path, minimap_position="bottom_right")
