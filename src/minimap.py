@@ -1,60 +1,66 @@
 import cv2
 import numpy as np
 from src.camera_utils import get_bbox_bottom_center_xy
+from src.constants import MINIMAP_TEMPLATE_PNG_PATH
 
 
-def create_minimap(
-    frame: np.ndarray, 
-    court_coords: list, 
-    player_bboxes: list, 
-    minimap_width: float = 0.25
-) -> np.ndarray:
+def get_perspective_transform_matrix(court_corners):
+    """Computes the perspective transform matrix to map points from the court's perspective to the frame's perspective.
+    
+    Args:
+        court_corners (list or array-like): A list or array of four points (x, y) representing the corners of the court.
+        frame_corners (tuple): A tuple (frame_h, frame_w) representing the height and width of the frame.
+
+    Returns:
+        numpy.ndarray: The perspective transform matrix (3x3) that maps the court corners to the frame corners.
+    """
+    frame = cv2.imread(MINIMAP_TEMPLATE_PNG_PATH)
+    frame_h, frame_w = frame.shape[:2]
+
+    # Define destination corners (tl, tr, br, bl) as the full size of the input court outline
+    src_corners = np.array(court_corners, dtype=np.int32)
+    dst_corners = np.array([
+        [0, 0],
+        [frame_w, 0],
+        [frame_w, frame_h],
+        [0, frame_h]
+    ], dtype=np.int32)
+
+    # Compute the perspective transform matrix
+    M = cv2.getPerspectiveTransform(src_corners.astype(np.float32), dst_corners.astype(np.float32))
+    return M
+
+
+def create_minimap(player_bboxes, transform_matrix) -> np.ndarray:
     """Create a minimap showing the bird's eye view of the court and player positions.
 
     Args:
         frame (np.ndarray): The original video frame.
         court_coords (list): List of court corner coordinates.
-        player_positions (list): List of player bounding box coordinates.
-        minimap_width (int, optional): Width of the minimap as ratio of zoomed frame width
+        player_bboxes (list): List of player bounding box coordinates.
+        minimap_width (float, optional): Width of the minimap as ratio of zoomed frame width
 
     Returns:
         np.ndarray: The minimap image.
     """
-    # Calculate the minimap dimensions
-    frame_height, frame_width = frame.shape[:2]
-    minimap_height = int(minimap_width * frame_height)
-    minimap_width = int(minimap_width * frame_width)
+    minimap = cv2.imread('/Users/Henry/Desktop/github/autostream-dupe/data/raw/basketball_court_outline.png')
+    minimap = np.array(minimap)
 
-    # Create a blank minimap
-    minimap = np.zeros((minimap_height, minimap_width, 3), dtype=np.uint8)
+    # Get player locations and convert to NumPy array
+    player_locations_xy = np.array([get_bbox_bottom_center_xy(box) for box in player_bboxes], dtype=np.float32).reshape(-1, 1, 2)
 
-    # Scale court coordinates to minimap size
-    # tl tr br bl
-    court_coords = np.array(court_coords)  # Convert list to NumPy array
-    court_coords[:, 0] = court_coords[:, 0] * minimap_width / frame_width
-    court_coords[:, 1] = court_coords[:, 1] * minimap_height / frame_height
-
-    # Draw the court on the minimap
-    cv2.polylines(minimap, [court_coords.astype(np.int32)], isClosed=True, color=(255, 255, 255), thickness=1)
-
-    # fill court with white color
-    cv2.fillPoly(minimap, [court_coords.astype(np.int32)], (150, 150, 150))
-
-    # Get player locations and scale them to minimap size
-    player_locations_xy = [get_bbox_bottom_center_xy(box) for box in player_bboxes]
-    player_locations_xy = np.array(player_locations_xy, dtype=np.float32)
-    player_locations_xy[:, 0] = player_locations_xy[:, 0] * minimap_width / frame_width
-    player_locations_xy[:, 1] = player_locations_xy[:, 1] * minimap_height / frame_height
+    # Apply the perspective transform
+    transformed_player_coords = cv2.perspectiveTransform(player_locations_xy, transform_matrix)
 
     # Draw players on the minimap
-    for (x, y) in player_locations_xy.astype(np.int32):
-        cv2.circle(minimap, (x, y), radius=5, color=(0, 255, 0), thickness=-1)
+    for point in transformed_player_coords:
+        x, y = int(point[0][0]), int(point[0][1])
+        cv2.circle(minimap, (x, y), radius=5, color=(255, 0, 0), thickness=2)
 
     return minimap
 
 
-
-def add_minimap_to_frame(frame, minimap) -> np.ndarray:
+def add_minimap_to_frame(frame, minimap, minimap_width: float = 0.2) -> np.ndarray:
     """Add a minimap to the frame showing the court and player positions.
     Args:
         frame (np.ndarray): The original video frame.
@@ -62,10 +68,16 @@ def add_minimap_to_frame(frame, minimap) -> np.ndarray:
     Returns:
         np.ndarray: The frame with the minimap overlay.
     """
+    # Scale the minimap to the desired size to be displayed in corner of the frame
+    frame_h, frame_w = frame.shape[:2]
+    scaled_h = int(minimap_width * frame_h)
+    scaled_w = int(minimap_width * frame_w)
+    minimap = cv2.resize(minimap, (scaled_w, scaled_h))
+
     overlay = frame.copy()
-    minimap_height, minimap_width = minimap.shape[:2]
-    overlay[0:minimap_height, 0:minimap_width] = minimap[..., :3]  # Only take RGB channels
-    frame = cv2.addWeighted(overlay, 0.6, frame, 0.4, 0)  # Blend the minimap with the frame
+    overlay[0:scaled_h, 0:scaled_w] = minimap[..., :3]  # Only take RGB channels
+    minimap_alpha = 0.9
+    frame = cv2.addWeighted(overlay, minimap_alpha, frame, 1-minimap_alpha, 0)  # Blend the minimap with the frame
     return frame
 
 

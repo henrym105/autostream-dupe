@@ -59,6 +59,17 @@ def select_court_corners(frame) -> list:
         frame (numpy.ndarray): The image frame in which the court corners are to be selected.
     """
     global coordinates
+    
+    # Display instructions on the frame
+    instructions = [
+        "Click on the court corners in clockwise order starting from the far-left corner.",
+        "Click enter to finish."
+    ]
+    y0, dy = 30, 30
+    for i, line in enumerate(instructions):
+        y = y0 + i * dy
+        cv2.putText(frame, line, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
+    cv2.imshow("Select Court Corners", frame)
 
     cv2.imshow("Select Court Corners", frame)
     cv2.setMouseCallback("Select Court Corners", click_event, frame)
@@ -69,7 +80,7 @@ def select_court_corners(frame) -> list:
             break
     cv2.destroyAllWindows()
 
-    coordinates = rearrange_corner_coords(coordinates)
+    # coordinates = rearrange_corner_coords(coordinates)
 
     # Create the directory if it doesn't exist
     os.makedirs(os.path.dirname(TEMP_COURT_OUTLINE_COORDS_PATH), exist_ok=True)

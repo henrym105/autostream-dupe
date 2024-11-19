@@ -31,6 +31,7 @@ from src.select_court_corners import (
 from src.minimap import (
     add_minimap_to_frame,
     create_minimap,
+    get_perspective_transform_matrix,
 )
 
 
@@ -90,7 +91,9 @@ def read_video(
             frame = draw_court_outline(frame)
 
         if DRAW_MINIMAP:
-            minimap = create_minimap(frame, four_corner_points_xy, player_bboxes)
+            
+            M = get_perspective_transform_matrix(four_corner_points_xy, frame.shape[:2])
+            minimap = create_minimap(player_bboxes, M)
 
         if CROP_VIDEO:
             frame = zoom_frame(frame, zoom_bbox)
