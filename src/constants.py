@@ -4,9 +4,8 @@ import os
 DRAW_PLAYER_BOXES = True
 DRAW_COURT_BOX = True
 DRAW_MINIMAP = True
-MINIMAP_SIZE = 0.2
 CROP_VIDEO = True
-SAVE_VIDEO_LOCAL = True
+SAVE_VIDEO_LOCAL = False
 
 # Define the current directory as a constant
 CUR_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

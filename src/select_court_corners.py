@@ -31,19 +31,21 @@ def rearrange_corner_coords(coordinates) -> list:
     Returns:
         list: List containing the rearranged coordinates
     """
+    # Find the top-left point
     top_left = min(coordinates, key=lambda x: (x[1], x[0]))
     
+    # Calculate the angle of each point from the top-left point
     def angle(point):
         return math.atan2(point[1] - top_left[1], point[0] - top_left[0])
     
     # Sort points based on angle from top-left
-    sorted_points = sorted(
-        [pt for pt in coordinates if pt != top_left],
-        key=angle,
-        reverse=True
-    )
+    sorted_points = sorted(coordinates, key=angle)
     
-    return [top_left] + sorted_points
+    # Ensure the top-left point is first
+    sorted_points.remove(top_left)
+    sorted_points.insert(0, top_left)
+    
+    return sorted_points
 
 
 def select_court_corners(frame) -> list:
@@ -56,7 +58,6 @@ def select_court_corners(frame) -> list:
     Args:
         frame (numpy.ndarray): The image frame in which the court corners are to be selected.
     """
-
     global coordinates
 
     cv2.imshow("Select Court Corners", frame)
@@ -83,6 +84,7 @@ def select_court_corners(frame) -> list:
 def infer_4_corners(all_points: list) -> list[int]:
     """Infer the 4 corner points of the court from up to 20 selected points.
     Need the 4 corner points for the perspective transform that creates the minimap. 
+    Returns the 4 points that are farthest from the geometric center of the image.
     
     Args:
         all_points (list): List of up to 20 (x, y) coordinates.
@@ -90,22 +92,23 @@ def infer_4_corners(all_points: list) -> list[int]:
     Returns:
         list: List of 4 (x, y) coordinates.
     """
-    # Rearrange the points in clockwise order
-    all_points = rearrange_corner_coords(all_points)
     
     # Calculate the center of the court
     center_x = sum([pt[0] for pt in all_points]) / 20
     center_y = sum([pt[1] for pt in all_points]) / 20
     
-    # Sort the points based on their distance from the center
-    all_points.sort(key=lambda pt: math.sqrt((pt[0] - center_x) ** 2 + (pt[1] - center_y) ** 2))
+    # Sort the points based on their distance from the center, return 4 farthest points
+    all_points.sort(key=lambda pt: math.sqrt((pt[0] - center_x)**2 + (pt[1] - center_y)**2), reverse=True)
+    corners = all_points[:4]
     
+    # Rearrange the points in clockwise order
+    corners = rearrange_corner_coords(corners)
+
     # Save the 4 corner points to a file
     with open(TEMP_4_CORNERS_COORDS_PATH, 'w') as f:
         json.dump(all_points[:4], f)
     
-    # Return the 4 corner points
-    return all_points[:4]
+    return corners
 
 
 

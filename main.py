@@ -30,6 +30,7 @@ from src.select_court_corners import (
 )
 from src.minimap import (
     add_minimap_to_frame,
+    create_minimap,
 )
 
 
@@ -71,9 +72,8 @@ def read_video(
         # pause on the first frame and select the corner points for the court, save them to a file
         if current_frame_num == 0:
             all_edge_points_xy = select_court_corners(frame)
-            four_corner_points_xy = infer_4_corners(all_edge_points_xy)
-            for point in four_corner_points_xy:
-                cv2.circle(frame, tuple(point), 5, (0, 0, 255), -1)  # Red color for corner points
+            # placeholder for future func to handle when >4 court points are input. 
+            four_corner_points_xy = all_edge_points_xy.copy() 
 
         # Update the human bounding boxes and zoom-area bounding box every frame
         player_bboxes = get_all_yolo_bounding_boxes(frame, yolo_model)
@@ -89,13 +89,16 @@ def read_video(
         if DRAW_COURT_BOX:
             frame = draw_court_outline(frame)
 
+        if DRAW_MINIMAP:
+            minimap = create_minimap(frame, four_corner_points_xy, player_bboxes)
+
         if CROP_VIDEO:
             frame = zoom_frame(frame, zoom_bbox)
         else:
             frame = draw_bounding_boxes(frame, [zoom_bbox], label="zoom_box", color=(0, 0, 255))
 
         if DRAW_MINIMAP:
-            frame = add_minimap_to_frame(frame, player_bboxes, four_corner_points_xy)
+            frame = add_minimap_to_frame(frame, minimap)
 
         # Display the resulting frame
         cv2.imshow('Frame', frame)
@@ -117,10 +120,10 @@ def read_video(
 
 
 if __name__ == "__main__":
-    src_path = os.path.join(CUR_DIR, "data", "raw", "example_video.mp4")
-    save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_autozoom.mp4")
-    # src_path = os.path.join(CUR_DIR, "data", "raw", "example_video_2.mp4")
-    # save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_2_autozoom.mp4")
+    # src_path = os.path.join(CUR_DIR, "data", "raw", "example_video.mp4")
+    # save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_autozoom.mp4")
+    src_path = os.path.join(CUR_DIR, "data", "raw", "example_video_2.mp4")
+    save_path = os.path.join(CUR_DIR, "data", "processed", "example_video_2_autozoom.mp4")
 
     yolo_model = load_yolo_model()
 
