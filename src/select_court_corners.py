@@ -10,9 +10,11 @@ coordinates = []
 
 
 def click_event(event, x, y, flags, param):
+    coordinates = param['coordinates']
+    border_size = param['border_size']
+
     if event == cv2.EVENT_LBUTTONDOWN:
         # Adjust coordinates to account for the border
-        border_size = param['border_size']
         adjusted_x = x - border_size
         adjusted_y = y - border_size
         coordinates.append((adjusted_x, adjusted_y))
@@ -23,6 +25,11 @@ def click_event(event, x, y, flags, param):
         else:
             cv2.circle(param['frame'], (x, y), 5, (0, 255, 0), -1)
             cv2.imshow("Select Court Corners", param['frame'])
+
+    elif event == cv2.EVENT_MOUSEMOVE and len(coordinates) > 0:
+        overlay = param['frame'].copy()
+        cv2.line(overlay, (coordinates[-1][0] + border_size, coordinates[-1][1] + border_size), (x, y), (0, 255, 0), 2)
+        cv2.imshow("Select Court Corners", overlay)
 
 
 def rearrange_corner_coords(coordinates) -> list:
@@ -81,7 +88,8 @@ def select_court_corners(frame) -> list:
     border_ratio = 0.2
     frame_with_border = add_border_to_frame(frame, border_ratio)
     border_size = int(frame.shape[1] * border_ratio)
-    
+    print(f"{border_size = }")
+
     # Display instructions on the frame
     instructions = [
         "Click on the court corners in clockwise order starting from the far-left corner.",
@@ -93,8 +101,13 @@ def select_court_corners(frame) -> list:
         cv2.putText(frame_with_border, line, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
     cv2.imshow("Select Court Corners", frame_with_border)
 
-    cv2.imshow("Select Court Corners", frame_with_border)
-    cv2.setMouseCallback("Select Court Corners", click_event, {'frame': frame_with_border, 'border_size': border_size})
+    # cv2.imshow("Select Court Corners", frame_with_border)
+    click_params = {
+        'frame': frame_with_border, 
+        'border_size': border_size, 
+        'coordinates': coordinates
+    }
+    cv2.setMouseCallback("Select Court Corners", click_event, click_params)
     
     while True:
         key = cv2.waitKey(1) & 0xFF
