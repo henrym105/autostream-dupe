@@ -4,7 +4,7 @@ import os
 DRAW_PLAYER_BOXES = True
 DRAW_COURT_BOX = True
 DRAW_MINIMAP = True
-CROP_VIDEO = True
+CROP_VIDEO = False
 SAVE_VIDEO_LOCAL = False
 
 # Define the current directory as a constant

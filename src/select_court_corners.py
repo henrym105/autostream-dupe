@@ -11,14 +11,18 @@ coordinates = []
 
 def click_event(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:
-        coordinates.append((x, y))
+        # Adjust coordinates to account for the border
+        border_size = param['border_size']
+        adjusted_x = x - border_size
+        adjusted_y = y - border_size
+        coordinates.append((adjusted_x, adjusted_y))
         if len(coordinates) >= 3:
-            overlay = param.copy()
-            cv2.fillPoly(overlay, [np.array(coordinates)], (0, 255, 0))
+            overlay = param['frame'].copy()
+            cv2.fillPoly(overlay, [np.array(coordinates) + border_size], (0, 255, 0))
             cv2.imshow("Select Court Corners", overlay)
         else:
-            cv2.circle(param, (x, y), 5, (0, 255, 0), -1)
-            cv2.imshow("Select Court Corners", param)
+            cv2.circle(param['frame'], (x, y), 5, (0, 255, 0), -1)
+            cv2.imshow("Select Court Corners", param['frame'])
 
 
 def rearrange_corner_coords(coordinates) -> list:
@@ -48,6 +52,20 @@ def rearrange_corner_coords(coordinates) -> list:
     return sorted_points
 
 
+def add_border_to_frame(frame, border_ratio=0.2):
+    """Add a black border around the frame.
+    
+    Args:
+        frame (numpy.ndarray): The original frame.
+        border_ratio (float): The ratio of the border size to the width of the frame.
+    
+    Returns:
+        numpy.ndarray: The frame with the added border.
+    """
+    border_size = int(frame.shape[1] * border_ratio)
+    return cv2.copyMakeBorder(frame, border_size, border_size, border_size, border_size, cv2.BORDER_CONSTANT, value=[0, 0, 0])
+
+
 def select_court_corners(frame) -> list:
     """Allows the user to manually select the corners of a court in a given frame.
     This function displays the provided frame in a window and allows the user to 
@@ -60,6 +78,10 @@ def select_court_corners(frame) -> list:
     """
     global coordinates
     
+    border_ratio = 0.2
+    frame_with_border = add_border_to_frame(frame, border_ratio)
+    border_size = int(frame.shape[1] * border_ratio)
+    
     # Display instructions on the frame
     instructions = [
         "Click on the court corners in clockwise order starting from the far-left corner.",
@@ -68,19 +90,17 @@ def select_court_corners(frame) -> list:
     y0, dy = 30, 30
     for i, line in enumerate(instructions):
         y = y0 + i * dy
-        cv2.putText(frame, line, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
-    cv2.imshow("Select Court Corners", frame)
+        cv2.putText(frame_with_border, line, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2)
+    cv2.imshow("Select Court Corners", frame_with_border)
 
-    cv2.imshow("Select Court Corners", frame)
-    cv2.setMouseCallback("Select Court Corners", click_event, frame)
+    cv2.imshow("Select Court Corners", frame_with_border)
+    cv2.setMouseCallback("Select Court Corners", click_event, {'frame': frame_with_border, 'border_size': border_size})
     
     while True:
         key = cv2.waitKey(1) & 0xFF
         if key == 13 or len(coordinates) == 20:  # Enter key or 20 points selected
             break
     cv2.destroyAllWindows()
-
-    # coordinates = rearrange_corner_coords(coordinates)
 
     # Create the directory if it doesn't exist
     os.makedirs(os.path.dirname(TEMP_COURT_OUTLINE_COORDS_PATH), exist_ok=True)
