@@ -8,7 +8,8 @@ from src.constants import (
     DRAW_COURT_BOX, 
     YOLO_HUMAN_CONFIDENCE_THRESHOLD, 
     YOLO_VERSION, 
-    TEMP_CORNERS_COORDS_PATH
+    TEMP_COURT_OUTLINE_COORDS_PATH,
+    TEMP_4_CORNERS_COORDS_PATH,
 )
 
 import json
@@ -60,7 +61,7 @@ def get_all_yolo_bounding_boxes(frame, model: YOLO, class_id=0, court_coords: np
 
     # Load court coordinates
     if court_coords is None:
-        with open(TEMP_CORNERS_COORDS_PATH, 'r') as f:
+        with open(TEMP_COURT_OUTLINE_COORDS_PATH, 'r') as f:
             court_coords = json.load(f)
     court_polygon = np.array(court_coords, dtype=np.int32)
 
@@ -91,7 +92,7 @@ def draw_bounding_boxes(frame: np.ndarray, boxes: list, label: str = "", color: 
 def draw_court_outline(frame, court_coords: list = None) -> np.ndarray:
     """Draw the outline of the court on the frame."""
     if not court_coords:
-        with open(TEMP_CORNERS_COORDS_PATH, 'r') as f:
+        with open(TEMP_COURT_OUTLINE_COORDS_PATH, 'r') as f:
             court_coords = json.load(f)
     court_polygon = np.array(court_coords, dtype=np.int32)
     cv2.polylines(frame, [court_polygon], isClosed=True, color=(0, 255, 0), thickness=2)
